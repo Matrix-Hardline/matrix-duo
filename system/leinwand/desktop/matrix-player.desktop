@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Matrix Player
+Comment=Videos ansehen — Bildschirmaufnahmen zuerst
+Exec=matrix-player %f
+Icon=matrix-player
+Terminal=false
+Categories=AudioVideo;Video;Player;
+MimeType=video/mp4;video/webm;video/x-matroska;video/quicktime;
+StartupWMClass=matrix-player

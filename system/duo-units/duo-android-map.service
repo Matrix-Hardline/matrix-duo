@@ -1,0 +1,13 @@
+[Unit]
+Description=duo: Android partitions read-only under /android
+DefaultDependencies=no
+After=local-fs.target systemd-udevd.service
+Before=duo-firmware.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/android-map.sh
+
+[Install]
+WantedBy=multi-user.target

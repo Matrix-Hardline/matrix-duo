@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=GNOME Software (Hintergrund)
+# Surface Duo: no background service at login (permanently used ~290 MB of 5.5 GB); opening it through the app still works
+Hidden=true

@@ -1,0 +1,21 @@
+/* Duo: lift the Firefox window's minimum width so Mutter may maximize it on 489 logical pixels (275 %) */
+:root { min-width: 200px !important; }
+
+/* Duo (31.10.): notification popups (doorhangers, e.g. «Add extension») never taller than the window.
+   Mutter clips popups that are too tall at the panel edge; the buttons were below it and unreachable.
+   Limit the content and let it scroll; the button row always stays visible. */
+.popup-notification-body-container {
+  max-height: 42vh !important;
+  overflow-y: auto !important;
+}
+#addon-webext-perm-list,
+#addon-webext-perm-list-required,
+#addon-webext-perm-list-optional,
+#addon-webext-perm-list-data-collection {
+  max-height: 24vh !important;
+  overflow-y: auto !important;
+}
+popupnotification .popup-notification-footer-container,
+popupnotification .panel-footer {
+  flex-shrink: 0 !important;
+}

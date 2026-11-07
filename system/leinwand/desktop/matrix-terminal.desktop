@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Matrix Terminal
+Comment=Die Kommandozeile — alacritty-Maschinenhaus, Matrix-Karosserie
+Exec=matrix-terminal
+Icon=matrix-terminal
+Terminal=false
+Categories=System;TerminalEmulator;
+StartupWMClass=matrix-terminal

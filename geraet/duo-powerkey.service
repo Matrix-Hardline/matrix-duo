@@ -1,0 +1,9 @@
+[Unit]
+Description=Surface Duo power key -> panel on/off (wlr-randr)
+After=duotouch.service
+[Service]
+ExecStart=/usr/local/bin/duo-powerkey /dev/input/event0
+Restart=always
+RestartSec=2
+[Install]
+WantedBy=multi-user.target

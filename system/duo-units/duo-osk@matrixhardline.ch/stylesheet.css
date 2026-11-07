@@ -1,0 +1,13 @@
+/* Duo OSK: Matrix-Stil (matrix-keyboard): Tasten 8 px gerundet, Pille 20 px, Abstand 6 px, Innenrand 12 px */
+#keyboard {
+    border-radius: 20px 20px 0 0;
+    padding: 12px;
+}
+.keyboard-key {
+    border-radius: 8px;
+    margin: 3px;
+    font-size: 16px;
+}
+.keyboard-key.default-key {
+    border-radius: 8px;
+}

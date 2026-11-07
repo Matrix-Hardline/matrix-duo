@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Duo Sitzung einrichten
+Exec=/usr/local/bin/duo-session-setup
+NoDisplay=true
+X-GNOME-Autostart-Phase=Initialization

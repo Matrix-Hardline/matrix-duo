@@ -1,0 +1,2 @@
+# Start GNOME automatically on tty1 (Duo experiment); Phosh still runs via phosh-duo
+if [ "$(tty)" = "/dev/tty1" ] && [ -x /usr/local/bin/gnome-duo ] && [ -e /etc/duo-gnome-autostart ]; then exec /usr/local/bin/gnome-duo; fi

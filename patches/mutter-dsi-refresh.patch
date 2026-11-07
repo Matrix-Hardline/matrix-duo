@@ -1,0 +1,25 @@
+--- a/src/backends/native/meta-kms-utils.c	2026-10-30 14:44:39.300552194 +0100
++++ b/src/backends/native/meta-kms-utils.c	2026-10-30 14:44:39.311277360 +0100
+@@ -36,6 +36,10 @@
+   if (drm_mode->vscan > 1)
+     denominator *= drm_mode->vscan;
+ 
++  /* duo-refresh: Command-Mode-DSI (Qualcomm sde) meldet unsinnige Austastwerte; dann gilt vrefresh */
++  if (drm_mode->vrefresh > 0 && numerator / denominator < 0.8 * drm_mode->vrefresh)
++    return (float) drm_mode->vrefresh;
++
+   return (float) (numerator / denominator);
+ }
+ 
+@@ -47,6 +51,11 @@
+   if (drm_mode->htotal <= 0 || drm_mode->vtotal <= 0)
+     return 0;
+ 
++  /* duo-refresh: bei unsinnigen Austastwerten (siehe oben) eine kleine Vblank-Dauer annehmen */
++  if (drm_mode->vrefresh > 0 &&
++      (drm_mode->clock * 1000.0) / ((double) drm_mode->vtotal * drm_mode->htotal) < 0.8 * drm_mode->vrefresh)
++    return 500;
++
+   /* Convert to int64_t early. */
+   value = drm_mode->vtotal - drm_mode->vdisplay;
+   value *= drm_mode->htotal;

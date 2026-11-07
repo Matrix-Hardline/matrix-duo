@@ -1,0 +1,32 @@
+q6asm: DSP-Puffer bei wiederholtem hw_params mit anderer Groesse freigeben und neu anlegen (PipeWire/WirePlumber rufen
+hw_params mehrfach ohne hw_free). v2 (30.10.2026, 02:20): nach q6asm_audio_client_buf_free_contiguous die Liste
+mem_map_handle neu initialisieren - q6asm_memory_unmap haengt nur den ersten Knoten aus, gibt aber das ganze Knoten-Array
+frei (list_add corruption -> kernel BUG in q6asm_memory_map_regions, toter Thread mit gehaltener card->mutex).
+
+diff --git a/dsp/q6asm.c b/dsp/q6asm.c
+index 3deab3a..457da0d 100644
+--- a/dsp/q6asm.c
++++ b/dsp/q6asm.c
+@@ -1562,8 +1562,20 @@ int q6asm_audio_client_buf_alloc_contiguous(unsigned int dir,
+ 	}
+ 
+ 	if (ac->port[dir].buf) {
+-		pr_err("%s: buffer already allocated\n", __func__);
+-		return 0;
++		/* Surface Duo / Fedora (30.10.2026): PipeWire/WirePlumber rufen hw_params mehrfach mit verschiedenen
++		 * Puffergroessen auf derselben Session; die alte Puffer-Reihe weiterzuverwenden fuehrt zu stummer
++		 * Wiedergabe. Bei abweichender Groesse/Anzahl freigeben und neu anlegen (wie hw_free -> hw_params). */
++		if (ac->port[dir].max_buf_cnt == bufcnt && ac->port[dir].buf[0].size == bufsz) {
++			pr_debug("%s: buffer already allocated (same size)\n", __func__);
++			return 0;
++		}
++		pr_info("%s: buffer already allocated, realloc %u x %u -> %u x %u\n", __func__,
++			ac->port[dir].buf[0].size, ac->port[dir].max_buf_cnt, bufsz, bufcnt);
++		q6asm_audio_client_buf_free_contiguous(dir, ac);
++		/* q6asm_memory_unmap() haengt nur den ersten Knoten aus, gibt aber das ganze Knoten-Array frei
++		 * (kzalloc in q6asm_memory_map_regions); die restlichen Knoten blieben tot in der Liste ->
++		 * list_add corruption beim Neu-Mappen. Liste leeren: alle Mappings dieser Richtung sind weg. */
++		INIT_LIST_HEAD(&ac->port[dir].mem_map_handle);
+ 	}
+ 	mutex_lock(&ac->cmd_lock);
+ 	buf = kzalloc(((sizeof(struct audio_buffer))*bufcnt),

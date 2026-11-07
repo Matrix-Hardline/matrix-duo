@@ -1,0 +1,41 @@
+--- a/src/freedreno/vulkan/tu_knl_kgsl.cc	2026-10-30 17:47:23.604652777 +0100
++++ b/src/freedreno/vulkan/tu_knl_kgsl.cc	2026-10-30 17:47:23.631057624 +0100
+@@ -102,7 +102,11 @@
+                        "DMA_HEAP_IOCTL_ALLOC failed (%s)", strerror(errno));
+    }
+ 
+-   return tu_bo_init_dmabuf(dev, out_bo, -1, alloc.fd);
++   /* duo-ionfd: tu_bo_init_dmabuf dupliziert den fd (shared_fd); das Original muss hier geschlossen werden,
++    * sonst haelt der Prozess jeden ION/dma-heap-Puffer fuer immer fest (Leck ~10 MB je Scanout-Puffer). */
++   VkResult result = tu_bo_init_dmabuf(dev, out_bo, -1, alloc.fd);
++   close(alloc.fd);
++   return result;
+ }
+ 
+ static VkResult
+@@ -123,7 +127,11 @@
+                        "ION_IOC_NEW_ALLOC failed (%s)", strerror(errno));
+    }
+ 
+-   return tu_bo_init_dmabuf(dev, out_bo, -1, alloc.fd);
++   /* duo-ionfd: tu_bo_init_dmabuf dupliziert den fd (shared_fd); das Original muss hier geschlossen werden,
++    * sonst haelt der Prozess jeden ION/dma-heap-Puffer fuer immer fest (Leck ~10 MB je Scanout-Puffer). */
++   VkResult result = tu_bo_init_dmabuf(dev, out_bo, -1, alloc.fd);
++   close(alloc.fd);
++   return result;
+ }
+ 
+ static VkResult
+@@ -165,7 +173,11 @@
+                        "ION_IOC_FREE failed (%s)", strerror(errno));
+    }
+ 
+-   return tu_bo_init_dmabuf(dev, out_bo, -1, share.fd);
++   /* duo-ionfd: tu_bo_init_dmabuf dupliziert den fd (shared_fd); das Original muss hier geschlossen werden,
++    * sonst haelt der Prozess jeden ION/dma-heap-Puffer fuer immer fest (Leck ~10 MB je Scanout-Puffer). */
++   VkResult result = tu_bo_init_dmabuf(dev, out_bo, -1, share.fd);
++   close(share.fd);
++   return result;
+ }
+ 
+ static VkResult

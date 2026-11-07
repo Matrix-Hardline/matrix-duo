@@ -1,0 +1,22 @@
+--- a/src/vulkan/instance.rs
++++ b/src/vulkan/instance.rs
+@@ -303,11 +303,18 @@
+             extensions.push(ext::metal_surface::NAME);
+             extensions.push(khr::portability_enumeration::NAME);
+         }
++        // Matrix (R209, Surface Duo): `WGPU_SKIP_DISPLAY_EXTENSIONS` leaves the
++        // direct-display extensions out. With VK_KHR_display enabled, Turnip on
++        // KGSL looks for a DRM display node to pair with, finds only the
++        // msm_drm display driver and fails the whole enumeration
++        // (VK_ERROR_INITIALIZATION_FAILED) — wgpu then fell back to llvmpipe.
++        // Wayland clients never use these extensions.
+         if cfg!(all(
+             unix,
+             not(target_vendor = "apple"),
+             not(target_family = "wasm")
+-        )) {
++        )) && std::env::var_os("WGPU_SKIP_DISPLAY_EXTENSIONS").is_none()
++        {
+             // VK_EXT_acquire_drm_display -> VK_EXT_direct_mode_display -> VK_KHR_display
+             extensions.push(ext::acquire_drm_display::NAME);
+             extensions.push(ext::direct_mode_display::NAME);

@@ -1,0 +1,13 @@
+# Surface Duo: block the card for PipeWire until direct ALSA playback is proven (30.10.: WirePlumber probing -> hw_params realloc -> kernel BUG).
+# Several match patterns, because the PipeWire name is uncertain (ID_PATH platform-soc:qcom,msm-audio-apr:sound-tavil).
+monitor.alsa.rules = [
+  {
+    matches = [
+      { alsa.card_name = "sm8150-tavil-snd-card" }
+      { device.name = "~alsa_card.*tavil.*" }
+      { device.name = "~alsa_card.*msm-audio-apr.*" }
+      { alsa.id = "sm8150-tavil-sn" }
+    ]
+    actions = { update-props = { device.disabled = true } }
+  }
+]

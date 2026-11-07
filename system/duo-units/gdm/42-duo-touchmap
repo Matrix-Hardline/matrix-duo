@@ -1,0 +1,4 @@
+[org/gnome/desktop/peripherals/touchscreens/045e:0c01]
+output=['QCM', '0x0001', '0x00000001', 'DSI-1']
+[org/gnome/desktop/peripherals/touchscreens/045e:0c02]
+output=['QCM', '0x0001', '0x00000001', 'DSI-2']

@@ -1,0 +1,16 @@
+#!/bin/sh
+# Matrix Anmeldung: the kiosk compositor for the login screen (greetd).
+# The Duo environment as in the session (/etc/environment, gdm drop-in, device.kdl).
+set -a
+[ -r /etc/environment ] && . /etc/environment
+set +a
+export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP=niri
+if tr -d '\0' < /proc/device-tree/model 2>/dev/null | grep -q '^Surface Duo'; then
+    export NIRI_CANVAS_REFRESH_HZ=60
+fi
+# --session: niri then offers the display interface (DisplayConfig) on the bus — duo-haltung rotates through it.
+for BIN in /usr/local/bin/niri-canvas /usr/bin/niri-canvas /usr/bin/niri; do
+    [ -x "$BIN" ] && exec "$BIN" --session -c /etc/greetd/matrix-anmeldung.kdl
+done
+# No niri: the text greeter, so you can still get in.
+exec agreety --cmd /usr/local/bin/niri-canvas-session

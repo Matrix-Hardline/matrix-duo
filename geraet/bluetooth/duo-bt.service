@@ -1,0 +1,17 @@
+[Unit]
+Description=duo: Bluetooth (WCN3998 an ttyHS0 -> /dev/vhci, Firmware aus /lib/firmware/qca)
+# ADSP must be running, otherwise Bluetooth blocks the kernel (Droidian Duo port); duo-bt itself waits up to 120 s for it
+After=duo-audio.service duo-firmware.service
+Before=bluetooth.service
+Wants=bluetooth.service
+
+[Service]
+ExecStartPre=-/usr/sbin/rfkill unblock bluetooth
+ExecStart=/usr/local/sbin/duo-bt
+Restart=on-failure
+RestartSec=15
+# 2 = ADSP not ONLINE: do not retry endlessly
+RestartPreventExitStatus=2
+
+[Install]
+WantedBy=multi-user.target

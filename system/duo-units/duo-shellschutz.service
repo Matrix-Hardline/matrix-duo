@@ -1,0 +1,10 @@
+[Unit]
+Description=Surface Duo: Oberflaeche vor dem OOM-Killer schuetzen (oom_score_adj -900)
+
+[Service]
+ExecStart=/usr/local/bin/duo-shellschutz
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

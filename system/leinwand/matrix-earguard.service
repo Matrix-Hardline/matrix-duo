@@ -1,0 +1,12 @@
+[Unit]
+Description=Matrix Gehörschutz — auf Kopfhörern gedeckelte Lautstärke, sanftes Einblenden, leisere Systemtöne
+After=pipewire-pulse.service
+Wants=pipewire-pulse.service
+
+[Service]
+ExecStart=/usr/local/bin/matrix-earguard
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

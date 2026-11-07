@@ -1,0 +1,14 @@
+[Unit]
+Description=duo: Startbild auf beiden Panels (bis GDM übernimmt)
+DefaultDependencies=no
+After=systemd-udev-settle.service duotouch.service duoheat.service
+Before=gdm.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/duo-splash /usr/share/duo/splash.bgra
+KillSignal=SIGTERM
+TimeoutStopSec=5
+
+[Install]
+WantedBy=multi-user.target

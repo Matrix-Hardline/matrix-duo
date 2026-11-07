@@ -1,0 +1,15 @@
+{
+  "uuid": "duo-osk@matrixhardline.ch",
+  "name": "Duo OSK",
+  "description": "Surface Duo: Bildschirmtastatur bekommt in Hochkant genug Hoehe (4 Reihen + Leiste) und folgt dem Panel mit dem Fokus.",
+  "shell-version": [
+    "48",
+    "49"
+  ],
+  "version": 27,
+  "session-modes": [
+    "user",
+    "gdm",
+    "unlock-dialog"
+  ]
+}

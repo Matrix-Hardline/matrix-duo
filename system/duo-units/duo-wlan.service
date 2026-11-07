@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: load qcacld wlan.ko and switch the driver on (wlan0)
+After=duo-wlfwd.service
+Requires=duo-wlfwd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'M=/lib/modules/$(uname -r)/wlan.ko; [ -f "$M" ] || { echo "no $M"; exit 0; }; grep -q ^wlan /proc/modules || insmod "$M"; for i in $(seq 1 60); do [ -e /dev/wlan ] && break; sleep 1; done; for i in $(seq 1 30); do grep -q "FW READY" /sys/kernel/debug/icnss/stats 2>/dev/null && break; sleep 1; done; (echo ON > /dev/wlan) 2>/dev/null; for i in $(seq 1 90); do [ -d /sys/class/net/wlan0 ] && { echo wlan0 da; exit 0; }; sleep 1; done; echo "kein wlan0"; exit 0'
+
+[Install]
+WantedBy=multi-user.target

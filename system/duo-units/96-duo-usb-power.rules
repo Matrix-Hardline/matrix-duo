@@ -1,0 +1,3 @@
+# Surface Duo 1 (Fedora): the dwc3 host reports too small a power budget, the kernel rejects devices with "insufficient
+# available bus power" (bMaxPower of a USB 3 stick). Force configuration 1; usb_set_configuration only warns.
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{bNumConfigurations}=="1", ATTR{bConfigurationValue}=="", ATTR{bConfigurationValue}="1"

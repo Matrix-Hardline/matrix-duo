@@ -1,0 +1,22 @@
+// Matrix base (R116 stage 1 of the die frühere Wahl replacement): the
+// system-level niri defaults, absorbed from the last zdots includes.
+// The user chain (window-decor.kdl -> local.kdl) overrides freely.
+
+// NO config-notification { disable-failed } here: die frühere Wahl suppressed
+// the failure banner, which is exactly why the stale-include breakage
+// (waybar fallback, 29.07.2026) reached the user silently. A config
+// that fails to load must say so on screen.
+
+debug {
+    honor-xdg-activation-with-invalid-serial
+}
+
+// Lid close locks the session — the Matrix lock screen, not the
+// dead DMS IPC the zdots version still called.
+switch-events {
+    lid-close { spawn "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-lock"; }
+    // R169: the kernel's DTX switch (SW_TABLET_MODE, measured on the
+    // Book 2) drives the home screen — detach opens it, attach closes.
+    tablet-mode-on { spawn "matrix-home"; }
+    tablet-mode-off { spawn "sh" "-c" "pkill -x matrix-home"; }
+}

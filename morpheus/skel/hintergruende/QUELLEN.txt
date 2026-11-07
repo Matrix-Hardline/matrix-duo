@@ -1,0 +1,9 @@
+Matrix wallpapers (Surface Duo)
+===============================
+Photos and graphics from freely usable image archives, downscaled to 3000 px:
+  *-unsplash*.jpg   Unsplash (unsplash.com/license) — photographer's name and image ID in the file name
+  pexels-*.jpg      Pexels (pexels.com/license)
+  eluela31-*, jplenio-*, vilkasss-*   Pixabay (pixabay.com/service/license-summary)
+  matrix-jamnik.jpg Church of Jamnik, Slovenia (image archive)
+  matrix-standard.jpg  Matrix default image
+The image rights remain with the authors; Matrix only passes the images on in downscaled form.

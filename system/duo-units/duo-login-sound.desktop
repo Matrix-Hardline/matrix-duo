@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Duo Anmeldeklang
+Exec=/bin/sh -c 'for i in $(seq 1 40); do wpctl status 2>/dev/null | grep -q "Surface Duo Lautsprecher" && break; sleep 0.5; done; sleep 5; pw-play /usr/share/sounds/duo/login.wav || { sleep 3; pw-play /usr/share/sounds/duo/login.wav; }; echo "duo-login-sound: gespielt $(date +%T)"'
+NoDisplay=true
+X-GNOME-Autostart-Phase=Application

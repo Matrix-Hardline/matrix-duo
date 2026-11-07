@@ -1,0 +1,23 @@
+#!/bin/sh
+# Matrix canvas session — starts the patched niri with the canvas
+# config. Additive; the stock niri session stays untouched.
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl --user import-environment 2>/dev/null
+    command -v dbus-update-activation-environment >/dev/null 2>&1 && \
+        dbus-update-activation-environment --all 2>/dev/null
+fi
+# R210: the Surface Duo's DSI panels report a mode that computes to
+# 21.932 Hz while their vblank runs at 60 Hz (measured 01.11.2026) — niri
+# then paced everything to ~20 frames/s. Patch 0011 takes the real rate.
+if [ -z "$NIRI_CANVAS_REFRESH_HZ" ] && tr -d '\0' < /proc/device-tree/model 2>/dev/null | grep -q '^Surface Duo'; then
+    export NIRI_CANVAS_REFRESH_HZ=60
+fi
+# R105: canvas-session.kdl is the config name; leinwand-session.kdl is
+# the pre-R105 legacy accepted for existing homes.
+CFG="$HOME/.config/niri/canvas-session.kdl"
+[ -e "$CFG" ] || CFG="$HOME/.config/niri/leinwand-session.kdl"
+for BIN in /usr/bin/niri-canvas /usr/local/bin/niri-canvas \
+           /usr/bin/niri-leinwand /usr/local/bin/niri-leinwand; do
+    [ -x "$BIN" ] && exec "$BIN" --session -c "$CFG"
+done
+echo "niri-canvas not found" >&2; exit 1

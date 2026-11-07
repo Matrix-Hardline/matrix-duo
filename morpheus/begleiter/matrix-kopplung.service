@@ -1,0 +1,11 @@
+[Unit]
+Description=Matrix-Kopplung: «Diesem Laptop vertrauen?» (nur am USB-Kabel, Morpheus)
+After=graphical-session.target
+
+[Service]
+ExecStart=/usr/local/bin/matrix-kopplung
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: CPU-Tiefschlaf freigeben (lpm_levels), mit Rueckfall nach unsauberem Ende
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/duo-tiefschlaf.sh
+ExecStop=/bin/sh -c 'rm -f /var/lib/duo/tiefschlaf-aktiv; sync'
+KillMode=process
+
+[Install]
+WantedBy=multi-user.target

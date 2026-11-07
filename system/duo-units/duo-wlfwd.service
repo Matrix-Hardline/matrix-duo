@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: WLAN firmware bring-up (board file, calibration, MAC) – cnss-daemon replacement
+After=duo-modem.service
+Requires=duo-modem.service
+
+[Service]
+ExecStart=/usr/local/bin/wlfwd /lib/firmware 02:4d:53:44:55:4f /var/lib/wlfwd
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

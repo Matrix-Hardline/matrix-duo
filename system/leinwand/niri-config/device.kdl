@@ -1,0 +1,57 @@
+// Surface Duo 1 (R209): two 1350x1800 panels side by side in portrait, as under GNOME (scale 2.75).
+// Touch: each panel has its own touch device (udev WL_OUTPUT, niri patch 0006).
+// The saved posture (duo-haltung, 02.11.2026): the session starts right away the way the device lies.
+// BEFORE the fixed settings: with two blocks for the same output, niri takes the first one.
+include optional=true "/run/duo/niri-ausgaenge.kdl"
+output "DSI-1" {
+    scale 2.75
+    position x=0 y=0
+    backdrop-color "#070814"
+}
+output "DSI-2" {
+    scale 2.75
+    position x=491 y=0
+    backdrop-color "#070814"
+}
+
+// Turnip (Adreno 640) offers only the «Fifo» present mode under Wayland; otherwise MatrixKit asks for «Mailbox» and the
+// apps abort with «Requested present mode Mailbox is not in the list of supported present modes: [Fifo]»  (01.11.).
+environment {
+    ICED_PRESENT_MODE "fifo"
+    // otherwise wgpu picks OpenGL for daemons (bar, dock) -> zink (/etc/environment) -> deadlock (01.11.)
+    WGPU_BACKEND "vulkan"
+}
+
+// Duo display (msm_drm/SDE, Android 4.14): the cursor plane made Mutter trigger a kernel panic on 29.10. and
+// makes niri's test commit fail with EINVAL (01.11. 15:03: «Error testing state», both panels black).
+// Use only the primary plane, like Mutter with MUTTER_DEBUG_DISABLE_HW_CURSORS=1.
+debug {
+    disable-cursor-plane
+    disable-direct-scanout
+}
+
+// R209: new windows fill the panel (a Duo panel is a phone; half a width would be 245 lp).
+layout {
+    default-column-width { proportion 1.0; }
+}
+
+// R209 (the owner): on the Duo every window opens maximised in its panel — otherwise the canvas lets it float freely
+// (canvas-mode.kdl open-floating). This rule comes after it and wins; app-specific exceptions in local.kdl come later.
+window-rule {
+    open-floating false
+    open-maximized true
+}
+
+// Screen on USB-C (DisplayPort, 05.11.2026): 1080p at 60 Hz instead of 4K at 30 Hz (only 2 lanes, the other two are
+// USB 3) and scale 1.5 — otherwise tiny on the TV. Night blue like the panels until the wallpaper is painted.
+output "DP-1" {
+    mode "1920x1080@60"
+    scale 1.5
+    backdrop-color "#070814"
+}
+
+// The display chip's writeback connector reports itself «connected» (4096x2160): no screen — off
+// (otherwise niri draws it every frame, grey bar when rotating, 02.11.2026).
+output "Virtual-1" {
+    off
+}

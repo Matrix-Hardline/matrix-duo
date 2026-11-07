@@ -1,0 +1,61 @@
+diff --git a/pd-mapper.c b/pd-mapper.c
+index 1167e02..d0a11cc 100644
+--- a/pd-mapper.c
++++ b/pd-mapper.c
+@@ -272,6 +272,44 @@ static char *known_extensions[] = {
+   NULL,
+ };
+ 
++/*
++ * Downstream (Android) kernels have no /sys/class/remoteproc. Fall back to
++ * scanning a flat firmware directory for the .jsn domain maps.
++ */
++static void pd_enumerate_dir(struct assoc *json_set, const char *dirpath)
++{
++	char json_path[PATH_MAX];
++	struct dirent *de;
++	DIR *dir;
++	size_t len;
++
++	dir = opendir(dirpath);
++	if (!dir)
++		return;
++
++	while ((de = readdir(dir)) != NULL) {
++		int extens_index;
++		bool found = false;
++
++		len = strlen(de->d_name);
++		for (extens_index = 0; known_extensions[extens_index] != NULL; extens_index++) {
++			int extens_len = strlen(known_extensions[extens_index]);
++			if (len > extens_len &&
++			    !strcmp(&de->d_name[len - extens_len], known_extensions[extens_index])) {
++				found = true;
++				break;
++			}
++		}
++		if (!found)
++			continue;
++		if (strlen(dirpath) + 1 + len + 1 > sizeof(json_path))
++			continue;
++		snprintf(json_path, sizeof(json_path), "%s/%s", dirpath, de->d_name);
++		assoc_set(json_set, json_path, NULL);
++	}
++	closedir(dir);
++}
++
+ static int pd_enumerate_jsons(struct assoc *json_set)
+ {
+ 	char firmware_value[PATH_MAX];
+@@ -291,8 +329,9 @@ static int pd_enumerate_jsons(struct assoc *json_set)
+ 
+ 	class_fd = open("/sys/class/remoteproc", O_RDONLY | O_DIRECTORY);
+ 	if (class_fd < 0) {
+-		warn("failed to open remoteproc class");
+-		return -1;
++		warnx("no remoteproc class, scanning %s for .jsn files", FIRMWARE_BASE);
++		pd_enumerate_dir(json_set, FIRMWARE_BASE);
++		return 0;
+ 	}
+ 
+ 	class_dir = fdopendir(class_fd);

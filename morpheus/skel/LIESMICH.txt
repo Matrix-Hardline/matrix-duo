@@ -1,0 +1,5 @@
+What the factory image brings along in addition to the packages (06.11.2026):
+  .config/matugen/        -> /etc/skel/.config/matugen   colour chain: wallpaper -> app palette + focus ring (niri palette.kdl)
+  hintergruende/QUELLEN.txt -> /usr/share/backgrounds/matrix/QUELLEN.txt
+The wallpapers themselves (24 images, Unsplash/Pexels/Pixabay, scaled down to 3000 px) are not in the repo;
+QUELLEN.txt lists every image with its photographer and image ID, so they can be fetched again from the archives.

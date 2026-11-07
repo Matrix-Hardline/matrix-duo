@@ -1,0 +1,4 @@
+[org/gnome/shell]
+enabled-extensions=['duo-osk@matrixhardline.ch']
+[org/gnome/desktop/interface]
+scaling-factor=uint32 2

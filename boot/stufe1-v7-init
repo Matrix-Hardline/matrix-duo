@@ -1,0 +1,65 @@
+#!/bin/busybox sh
+# Stage 1 v7 (Surface Duo, 31.10.2026): start Fedora from its own partition, otherwise wait for the laptop as before.
+# Rules (DUALBOOT-/INSTALLATION-RECHERCHE): partition only via PARTNAME=fedora AND filesystem LABEL=duo-fedora,
+# e2fsck before mounting (>=4 -> do not mount), boot counter (>3 failed boots -> no longer from the disk),
+# on EVERY error rescue = old behaviour (telnet + wait for /go from the laptop). Never reboot, never panic.
+/bin/busybox --install -s
+mount -t devtmpfs dev /dev; mount -t proc proc /proc; mount -t sysfs sys /sys
+mkdir -p /dev/pts; mount -t devpts devpts /dev/pts; mount -t configfs configfs /sys/kernel/config
+log() { echo "duo-stufe1: $*" > /dev/kmsg; echo "$*" >> /tmp/stufe1.log; }
+log "v7 init laeuft (Kernel $(uname -r))"
+G=/sys/kernel/config/usb_gadget/duo; mkdir -p $G; cd $G
+echo 0x1d6b > idVendor; echo 0x0104 > idProduct
+mkdir -p strings/0x409; echo "Surface-Duo-Fedora-Stufe1" > strings/0x409/product; echo Matrix > strings/0x409/manufacturer; echo duo1 > strings/0x409/serialnumber
+mkdir -p configs/c.1/strings/0x409; echo "RNDIS+ACM" > configs/c.1/strings/0x409/configuration
+mkdir -p functions/rndis.usb0 functions/acm.GS0 2>/dev/null; ln -sf $G/functions/rndis.usb0 configs/c.1/; ln -sf $G/functions/acm.GS0 configs/c.1/
+cd /; for i in $(seq 60); do U=$(ls /sys/class/udc 2>/dev/null | head -1); [ -n "$U" ] && break; sleep 1; done
+echo "$U" > $G/UDC
+for i in $(seq 10); do N=$(ls /sys/class/net 2>/dev/null | grep -E "^(usb|rndis)" | head -1); [ -n "$N" ] && break; sleep 1; done
+[ -n "$N" ] && { ip addr add 172.16.42.1/24 dev $N 2>/dev/null; ip link set $N up; }
+telnetd -b 172.16.42.1:23 -l /bin/sh
+log "bereit: telnet 172.16.42.1 (Netz ${N:-keins})"
+
+rettung() {
+  log "RETTUNG: $* -> warte auf den Laptop (duo-fedora.sh / v6-squash.sh liefert die Wurzel und setzt /go)"
+  umount /disk 2>/dev/null
+  while [ ! -f /go ]; do sleep 1; done
+  log "Laptop-Wurzel bereit -> switch_root"
+  killall telnetd 2>/dev/null; sleep 1
+  exec switch_root /newroot /usr/lib/systemd/systemd
+}
+
+# The laptop may deselect the disk path within the first 6 s (touch /nodisk over telnet)
+for i in 1 2 3 4 5 6; do [ -f /nodisk ] && rettung "Laptop hat /nodisk gesetzt"; sleep 1; done
+
+# Fedora-Partition suchen: Partitionsname fedora
+P=""
+for u in /sys/class/block/*/uevent; do
+  grep -q '^PARTNAME=fedora$' "$u" 2>/dev/null && P=/dev/$(grep '^DEVNAME=' "$u" | cut -d= -f2) && break
+done
+[ -n "$P" ] && [ -b "$P" ] || rettung "keine Partition mit Namen fedora"
+L=$(blkid "$P" 2>/dev/null | sed -n 's/.*LABEL="\([^"]*\)".*/\1/p')
+[ "$L" = "duo-fedora" ] || rettung "Partition $P hat nicht das Dateisystem duo-fedora (LABEL='$L')"
+
+/sbin/e2fsck -p "$P" >> /tmp/stufe1.log 2>&1; rc=$?
+log "e2fsck $P -> $rc"
+[ "$rc" -ge 4 ] && rettung "e2fsck meldet $rc (nicht automatisch reparierbar)"
+
+mkdir -p /disk && mount -t ext4 -o rw,noatime,data=ordered "$P" /disk || rettung "Einhaengen von $P fehlgeschlagen"
+S=/disk/system
+cur=$(cat $S/current 2>/dev/null)
+[ -n "$cur" ] && [ -f "$S/$cur.sqfs" ] || rettung "kein Systemabbild ($S/current = '$cur')"
+tries=$(cat $S/tries 2>/dev/null || echo 0)
+case "$tries" in ''|*[!0-9]*) tries=0 ;; esac
+[ "$tries" -ge 3 ] && rettung "$tries Fehlstarts in Folge mit Abbild $cur (duo-boot-ok hat nicht bestaetigt)"
+echo $((tries + 1)) > $S/tries; sync
+
+mkdir -p /lower /disk/overlay/upper /disk/overlay/work
+mount -t squashfs -o loop,ro "$S/$cur.sqfs" /lower || rettung "Abbild $cur nicht einhaengbar"
+mount -t overlay overlay -o lowerdir=/lower,upperdir=/disk/overlay/upper,workdir=/disk/overlay/work /newroot \
+  || rettung "Overlay fehlgeschlagen"
+mkdir -p /newroot/proc /newroot/sys /newroot/dev /newroot/run /newroot/tmp /newroot/duo-disk
+mount --move /disk /newroot/duo-disk 2>/dev/null || mount --bind /disk /newroot/duo-disk
+log "Fedora von $P, Abbild $cur (Versuch $((tries + 1))) -> switch_root"
+killall telnetd 2>/dev/null; sleep 1
+exec switch_root /newroot /usr/lib/systemd/systemd

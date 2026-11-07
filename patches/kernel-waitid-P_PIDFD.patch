@@ -1,0 +1,65 @@
+pidfd: add P_PIDFD to waitid() – Backport von Upstream 3695eae5fee0 (Linux 5.4) auf Microsofts msm-4.14.
+Grund: pidfd_open() ist da (Android-Backport), waitid(P_PIDFD) fehlt -> GLib >= 2.76 g_child_watch bekommt EINVAL,
+gnome-session erfährt nie vom Ende seiner Startprogramme (Timeout 45 s), GDM wirft zurück zum Greeter. 30.10.2026.
+
+diff --git a/include/uapi/linux/wait.h b/include/uapi/linux/wait.h
+index ac49a220c..85b809fc9 100644
+--- a/include/uapi/linux/wait.h
++++ b/include/uapi/linux/wait.h
+@@ -17,6 +17,7 @@
+ #define P_ALL		0
+ #define P_PID		1
+ #define P_PGID		2
++#define P_PIDFD		3
+ 
+ 
+ #endif /* _UAPI_LINUX_WAIT_H */
+diff --git a/kernel/exit.c b/kernel/exit.c
+index d9013af25..01add1e64 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -1556,6 +1556,23 @@ static long do_wait(struct wait_opts *wo)
+ 	return retval;
+ }
+ 
++/* pidfd -> struct pid (Referenz genommen; Aufrufer gibt sie mit put_pid frei). Backport von 5.4 (3695eae5fee0). */
++static struct pid *pidfd_get_pid(unsigned int fd)
++{
++	struct fd f;
++	struct pid *pid;
++
++	f = fdget(fd);
++	if (!f.file)
++		return ERR_PTR(-EBADF);
++	if (f.file->f_op != &pidfd_fops)
++		pid = ERR_PTR(-EINVAL);
++	else
++		pid = get_pid(f.file->private_data);
++	fdput(f);
++	return pid;
++}
++
+ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
+ 			  int options, struct rusage *ru)
+ {
+@@ -1584,11 +1601,19 @@ static long kernel_waitid(int which, pid_t upid, struct waitid_info *infop,
+ 		if (upid <= 0)
+ 			return -EINVAL;
+ 		break;
++	case P_PIDFD:
++		type = PIDTYPE_PID;
++		if (upid < 0)
++			return -EINVAL;
++		pid = pidfd_get_pid(upid);
++		if (IS_ERR(pid))
++			return PTR_ERR(pid);
++		break;
+ 	default:
+ 		return -EINVAL;
+ 	}
+ 
+-	if (type < PIDTYPE_MAX)
++	if (type < PIDTYPE_MAX && !pid)
+ 		pid = find_get_pid(upid);
+ 
+ 	wo.wo_type	= type;

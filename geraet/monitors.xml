@@ -1,0 +1,18 @@
+<monitors version="2">
+  <configuration>
+    <logicalmonitor>
+      <x>0</x><y>0</y><scale>2</scale><primary>yes</primary>
+      <monitor>
+        <monitorspec><connector>DSI-1</connector><vendor>QCM</vendor><product>0x0001</product><serial>0x00000001</serial></monitorspec>
+        <mode><width>1350</width><height>1800</height><rate>60</rate></mode>
+      </monitor>
+    </logicalmonitor>
+    <logicalmonitor>
+      <x>675</x><y>0</y><scale>2</scale>
+      <monitor>
+        <monitorspec><connector>DSI-2</connector><vendor>QCM</vendor><product>0x0001</product><serial>0x00000001</serial></monitorspec>
+        <mode><width>1350</width><height>1800</height><rate>60</rate></mode>
+      </monitor>
+    </logicalmonitor>
+  </configuration>
+</monitors>

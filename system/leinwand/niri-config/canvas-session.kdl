@@ -1,0 +1,11 @@
+// Matrix canvas — session config: the normal environment + canvas gesture.
+// Place at ~/.config/niri/canvas-session.kdl.
+include "config.kdl"
+
+gestures {
+    canvas-drag
+}
+
+// Start the shell (DankMaterialShell) + Matrix services — the direct
+// niri start does not activate graphical-session.target automatically.
+spawn-at-startup "sh" "-c" "~/.config/niri/canvas-start.sh"

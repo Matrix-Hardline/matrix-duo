@@ -1,0 +1,12 @@
+// Matrix base window rules (absorbed from zdots window-rules.kdl,
+// minus rules for apps Matrix does not ship). The user chain raises
+// the corner radius to 10.
+window-rule {
+    geometry-corner-radius 6
+    clip-to-geometry true
+}
+
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}

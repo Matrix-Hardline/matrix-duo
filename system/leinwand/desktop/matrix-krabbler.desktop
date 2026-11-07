@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Matrix Krabbler
+Comment=Wortwesen krabbeln über eine Textseite und sammeln ihre Lieblingswörter
+Exec=matrix-krabbler
+Icon=matrix-markdown
+Terminal=false
+Categories=Game;Amusement;
+StartupWMClass=matrix-krabbler

@@ -1,0 +1,14 @@
+{
+  "app_id": "matrix-capture",
+  "intents": [
+    { "id": "capture.photo", "title": "Bildschirmfoto aufnehmen",
+      "exec": ["matrix-capture", "photo"],
+      "keywords": ["foto", "screenshot", "bildschirmfoto"] },
+    { "id": "capture.region", "title": "Bildschirmbereich fotografieren",
+      "exec": ["matrix-capture", "region"],
+      "keywords": ["bereich", "ausschnitt"] },
+    { "id": "capture.recording", "title": "Bildschirmaufnahme starten",
+      "exec": ["matrix-capture", "recording"],
+      "keywords": ["aufnahme", "film", "video"] }
+  ]
+}

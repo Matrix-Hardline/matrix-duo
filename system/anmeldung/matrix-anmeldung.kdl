@@ -1,0 +1,38 @@
+// Matrix login (round 33): only the login screen. When matrix-greeter ends
+// (success OR crash), niri ends with it — greetd then starts the session or
+// shows the login screen again.
+hotkey-overlay {
+    skip-at-startup
+}
+// The saved posture (duo-haltung, 02.11.2026): login starts right away the way the device is lying.
+// It comes BEFORE the fixed settings — with two blocks for the same output, niri uses the first.
+include optional=true "/run/duo/niri-ausgaenge.kdl"
+// Surface Duo 1: two panels, scaling as in the session (device.kdl).
+output "DSI-1" {
+    scale 2.75
+    position x=0 y=0
+    backdrop-color "#070814"
+}
+output "DSI-2" {
+    scale 2.75
+    position x=491 y=0
+    backdrop-color "#070814"
+}
+// The display chip's writeback connector reports itself as «connected» (4096x2160): not a screen — off
+// (otherwise niri draws it along every frame, grey bar when rotating, 02.11.2026).
+output "Virtual-1" {
+    off
+}
+environment {
+    ICED_PRESENT_MODE "fifo"
+    WGPU_BACKEND "vulkan"
+}
+// Duo display: no cursor plane, no direct scanout (kernel panic/EINVAL, device.kdl).
+debug {
+    disable-cursor-plane
+    disable-direct-scanout
+}
+cursor {
+    hide-when-typing
+}
+spawn-at-startup "sh" "-c" "PATH=/usr/local/bin:/usr/bin:$PATH matrix-greeter 2>>/tmp/matrix-anmeldung.log; niri msg action quit --skip-confirmation"

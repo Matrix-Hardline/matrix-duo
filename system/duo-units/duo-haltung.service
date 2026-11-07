@@ -1,0 +1,14 @@
+[Unit]
+Description=duo: Haltungsdienst (Posture-Sensor -> Schlaf/Wecken, ein Panel bei Flip)
+After=duo-hexagonrpcd.service gdm.service duotouch.service duoheat.service
+Requires=duo-hexagonrpcd.service
+
+[Service]
+Type=simple
+ExecStartPre=/bin/sleep 8
+ExecStart=/usr/local/sbin/duo-haltung.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

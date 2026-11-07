@@ -1,0 +1,11 @@
+[Unit]
+Description=duo: TFTP server over QRTR (serves wlanmdsp.mbn etc. from /lib/firmware)
+After=duo-qrtr-ns.service duo-firmware.service
+Requires=duo-qrtr-ns.service
+
+[Service]
+ExecStart=/usr/local/bin/tqftpserv
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

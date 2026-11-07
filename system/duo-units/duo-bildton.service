@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: Ton über den Bildschirm am USB-C (DisplayPort/HDMI) — Senke «Fernseher» beim Einstecken
+After=pipewire-pulse.service wireplumber.service
+Wants=pipewire-pulse.service
+
+[Service]
+ExecStart=/usr/local/bin/duo-bildton
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

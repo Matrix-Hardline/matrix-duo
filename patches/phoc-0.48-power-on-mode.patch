@@ -1,0 +1,20 @@
+diff --git a/src/output.c b/src/output.c
+index fcaa2d8..1374ae2 100644
+--- a/src/output.c
++++ b/src/output.c
+@@ -2024,6 +2024,15 @@ phoc_output_handle_output_power_manager_set_mode (struct wl_listener *listener,
+ 
+   wlr_output_state_init (&pending);
+   wlr_output_state_set_enabled (&pending, enable);
++  /* msm_drm/SDE (4.14, command mode panels) rejects re-enabling without an explicit
++   * mode in the same commit; always pass the current (or preferred) mode. */
++  if (enable) {
++    struct wlr_output_mode *mode = self->wlr_output->current_mode;
++    if (!mode)
++      mode = wlr_output_preferred_mode (self->wlr_output);
++    if (mode)
++      wlr_output_state_set_mode (&pending, mode);
++  }
+ 
+   if (!wlr_output_commit_state (self->wlr_output, &pending)) {
+     g_warning ("Failed to commit power mode change to %d for %p", enable, self);

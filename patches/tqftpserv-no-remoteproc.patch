@@ -1,0 +1,22 @@
+diff --git a/translate.c b/translate.c
+index 19fdd48..5005f18 100644
+--- a/translate.c
++++ b/translate.c
+@@ -85,8 +85,15 @@ static int translate_readonly(const char *file)
+ 
+ 	class_fd = open("/sys/class/remoteproc", O_RDONLY | O_DIRECTORY);
+ 	if (class_fd < 0) {
+-		warn("failed to open remoteproc class");
+-		return -1;
++		/* Downstream (Android) kernel without remoteproc: serve straight from the firmware base */
++		if (strlen(FIRMWARE_BASE) + strlen(file) + 1 > sizeof(path))
++			return -1;
++		strcpy(path, FIRMWARE_BASE);
++		strcat(path, file);
++		fd = open_maybe_compressed(path);
++		if (fd < 0 && errno != ENOENT)
++			warn("failed to open %s", path);
++		return fd;
+ 	}
+ 
+ 	class_dir = fdopendir(class_fd);

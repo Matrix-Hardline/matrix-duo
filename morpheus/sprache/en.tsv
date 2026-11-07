@@ -1,0 +1,861 @@
+# Matrix — englischer Katalog (06.11.2026): eine Zeile je Text, «Deutsch<TAB>English». Der deutsche Text ist der Schlüssel.
+# \n in einem Text = Zeilenumbruch. Apps rufen mk::language::t / tr / pick.
+# ---- Paket 1: Kit + Shell-Apps (06.11.2026) ----
+1 Fenster	1 window
+Abbr.	Cancel
+Abbrechen	Cancel
+Abgebrochen	Cancelled
+Abmelden …	Log out …
+Akku	Battery
+Aktion	Action
+Aktives Fenster	Active window
+Alle löschen	Clear all
+Alle Programme	All programs
+Alles gelesen	All read
+Alle Steuerelemente sind in der Zentrale.	All controls are in the control centre.
+Alle Widgets sind in der Leiste	All widgets are in the bar
+An	On
+Angemeldet	Logged in
+Anpassen …	Customise …
+Anpinnen	Pin
+App beenden	Quit app
+App hinzufügen	Add app
+Apps …	Apps …
+Arbeitsspeicher knapp	Memory low
+Aufnahme	Recording
+Aufnahme: {}	Recording: {}
+Aufnahme gesichert	Recording saved
+Aufs andere Panel	To the other panel
+Aus	Off
+Ausgang {} nicht gefunden	Output {} not found
+Ausschalten	Power off
+Bedienungshilfen	Accessibility
+Beenden	Quit
+Befehl	Command
+Beide Bildschirme filmen	Record both screens
+Benutzer	User
+Bereich auswählen …	Select area …
+Bildschirm	Screen
+Bildschirmaufnahme gespeichert	Screen recording saved
+Bildschirmaufnahme nicht möglich	Screen recording not possible
+Bildschirm filmen	Record screen
+Bildschirm sofort sperren	Lock screen now
+Bildschirm sperren	Lock screen
+Code eingeben	Enter code
+Code zum Bearbeiten	Code to edit
+Das Werkzeug «wf-recorder» fehlt noch — installieren mit: sudo dnf install wf-recorder	The tool «wf-recorder» is missing — install it with: sudo dnf install wf-recorder
+Das Ziel ist schreibgeschützt	The destination is write-protected
+Datei	File
+«{}»: Datei nicht mehr da	«{}»: file no longer there
+Datei nicht mehr da	File no longer there
+Datei zu gross für dieses Dateisystem (FAT32: höchstens 4 GB)	File too large for this file system (FAT32: at most 4 GB)
+Datenträger verbunden	Drive connected
+Deckkraft	Opacity
+Der Datenträger ist fast voll	The drive is almost full
+Der Datenträger wird knapp	The drive is running low
+Der Video-Encoder antwortet nicht ({}).	The video encoder does not respond ({}).
+Dicke	Weight
+Die Duo-Kamera ohne Android: Rohbild aus dem Kernel, eigene Belichtung, eigene Entwicklung. Fotos in Bilder/Kamera.	The Duo camera without Android: raw image from the kernel, own exposure, own development. Photos in Pictures/Camera.
+Drehung sperren	Lock rotation
+Einhängepunkt unbekannt	Mount point unknown
+Einstellungen …	Settings …
+ein Ton	a sound
+Erhöhter Kontrast	Increased contrast
+Erscheinung umschalten	Switch appearance
+Falscher Code	Wrong code
+Federn und Übergänge stillhalten	Keep springs and transitions still
+Fenster	Window
+{} — Fenster 1	{} — window 1
+Fenster fotografieren	Capture window
+Filmauflösung	Recording resolution
+Film beenden	Stop recording
+Flugmodus	Aeroplane mode
+Foto misslungen — {}	Photo failed — {}
+Foto wird aufgenommen …	Taking photo …
+Funk	Wireless
+Funknetz	Wireless network
+Ganzen Bildschirm fotografieren	Capture whole screen
+gelöst	detached
+Gespeichert: Bilder/Kamera/{}	Saved: Pictures/Camera/{}
+Gesperrt	Locked
+Gestern	Yesterday
+Grösse stimmt nicht ({} statt {} Byte)	Size does not match ({} instead of {} bytes)
+Helles Erscheinungsbild	Light appearance
+Herunterfahren	Shut down
+Hintergrund ändern …	Change wallpaper …
+Hinweiston «{}» auf {} % gesetzt	Alert sound «{}» set to {} %
+„{}“ ({}) ist jetzt verfügbar.	“{}” ({}) is now available.
+Kamera	Camera
+Kamera nicht startbar ({}: {})	Camera cannot start ({}: {})
+Kamera startet …	Camera starting …
+«{}» kann nicht in sich selbst	«{}» cannot go into itself
+Keine Berechtigung	No permission
+keine gewöhnliche Datei	not a regular file
+Keine Mitteilungen	No notifications
+Kein Platz mehr auf dem Ziel	No space left on the destination
+Kein Video	No video
+Kein Video — matrix-player <Datei>	No video — matrix-player <file>
+Klang	Sound
+Konto	Account
+Kontrollzentrum	Control centre
+Kopfhörer kamen mit {} % — auf {} % gesenkt	Headphones came at {} % — lowered to {} %
+Kräftigere Text- und Konturfarben	Stronger text and outline colours
+{} lässt sich nicht aushängen: {}	{} cannot be ejected: {}
+Leeren	Empty
+Leise	Quiet
+Leiste & Dock anpassen	Customise bar & dock
+Leiste & Dock anpassen …	Customise bar & dock …
+Leisten und Schleier deckend	Bars and veils opaque
+Lese- oder Schreibfehler (Stick abgezogen?)	Read or write error (stick unplugged?)
+Löschen	Delete
+losgelöst	detached
+Loslösen	Detach
+Matrix-App	Matrix app
+Matrix Kamera	Matrix Camera
+Matrix-Menü	Matrix menu
+Matrix Mitteilungen	Matrix Notifications
+Mikrofon aus	Microphone off
+Mitteilungen	Notifications
+Mitteilungen kommen still in diese Liste	Notifications arrive quietly in this list
+ · mit Ton	 · with sound
+Nach oben wischen zum Entsperren	Swipe up to unlock
+Name auf dem Ziel nicht erlaubt (Zeichen wie : ? * \" < > |)	Name not allowed on the destination (characters like : ? * \" < > |)
+Name zu lang für das Ziel	Name too long for the destination
+Nativ ({} × {})	Native ({} × {})
+Nativ (Displayauflösung)	Native (display resolution)
+Neues Browserfenster	New browser window
+Neustart	Restart
+Neustarten	Restart
+Neustart misslang: {}	Restart failed: {}
+Nicht richtig ausgeworfen	Not ejected properly
+Nichts gefunden	Nothing found
+Nichts gefunden.	Nothing found.
+Nicht stören	Do not disturb
+nicht verfügbar	not available
+Noch nichts kopiert	Nothing copied yet
+Nur noch {} % frei. Zeit zum Aufräumen.	Only {} % free. Time to tidy up.
+Nur noch {} MB frei.{}	Only {} MB free.{}
+öffnet	opens
+ · ohne Ton	 · without sound
+Optionen	Options
+Ordner: {}	Folder: {}
+Panels tauschen	Swap panels
+Probe — öffnet sich nach 45 s von selbst	Test — opens by itself after 45 s
+Programm	Program
+Rechnen	Calculate
+«{}» sanft auf {} % eingeblendet	«{}» faded in gently to {} %
+schließt	closes
+Schliesst alle Fenster dieser App	Closes all windows of this app
+Seite {}	Page {}
+Sichern	Save
+Sichtbar als Matrix	Visible as Matrix
+Sie schlafen — tippe, um sie zu wecken.	They are asleep — tap to wake them.
+Sitzung	Session
+Softwareupdate …	Software update …
+Speicherkarte	Memory card
+Speichern: {}	Save: {}
+Sperren	Lock
+Standby	Standby
+Steuerelemente bearbeiten	Edit controls
+Steuerelemente durchsuchen	Search controls
+Steuer hinzufügen	Add control
+Suchen, springen oder rechnen …	Search, jump or calculate …
+Symbolleiste	Toolbar
+Systemeinstellungen …	System settings …
+Systemlast	System load
+Tastatur beendet, Code {}	Keyboard ended, code {}
+Ton {}	Sound {}
+Ton aus	Sound off
+Ton, Funk, Bildschirm und Bedienungshilfen	Sound, wireless, screen and accessibility
+{} · {} · trägt {}	{} · {} · carries {}
+Transparenz reduzieren	Reduce transparency
+Über diese Matrix	About this Matrix
+Uhr antippen: Dicke, Deckkraft · Ecke ziehen: Grösse	Tap the clock: weight, opacity · drag the corner: size
+Uhrzeit	Time
+Verlauf leeren	Clear history
+Video läuft	Video playing
+Video läuft: {}	Video playing: {}
+Videos/Bildschirmaufnahmen	Videos/Screen recordings
+Videos ansehen — Bildschirmaufnahmen zuerst. Der Decoder läuft außer Prozess, mit Ton.	Watch videos — screen recordings first. The decoder runs out of process, with sound.
+Vor {} Min.	{} min ago
+Vorschläge	Suggestions
+Vor {} Std.	{} h ago
+Vor {} T.	{} d ago
+{} % war zu laut — auf {} % zurückgeholt	{} % was too loud — brought back to {} %
+Weniger	Less
+Weniger anzeigen	Show less
+Wiedergabe	Playback
+Wird gelesen …	Reading …
+Wird geprüft …	Checking …
+Wirklich?	Really?
+Wirklich ausschalten?	Really power off?
+Wirklich neu starten?	Really restart?
+Wortwesen krabbeln über eine Textseite und sammeln ihre Lieblingswörter. Tippen lockt sie an, ein Tipp auf ein Wesen verscheucht es.	Word creatures crawl across a page of text and collect their favourite words. Tapping lures them; a tap on a creature shoos it away.
+Wortwesen laufen über diese App	Word creatures run across this app
+Ziel ist kein Ordner	Destination is not a folder
+zurück in die Zwischenablage	back to the clipboard
+Zu wenig Platz: {} nötig, {} frei	Not enough space: {} needed, {} free
+Zwischenablage	Clipboard
+Mo.	Mon
+Di.	Tue
+Mi.	Wed
+Do.	Thu
+Fr.	Fri
+Sa.	Sat
+So.	Sun
+Jan.	Jan
+Feb.	Feb
+März	Mar
+Apr.	Apr
+Mai	May
+Juni	Jun
+Juli	Jul
+Aug.	Aug
+Sept.	Sep
+Okt.	Oct
+Nov.	Nov
+Dez.	Dec
+Bildschirmfoto	Screenshot
+Bildschirmfotos	Screenshots
+Lautstärke	Volume
+Helligkeit	Brightness
+Dunkel	Dark
+Hell	Light
+Automatisch	Automatic
+Verbunden	Connected
+Getrennt	Disconnected
+Gekoppelt	Paired
+Trennen	Disconnect
+Verbinden	Connect
+Heute	Today
+Morgen	Tomorrow
+Jetzt	Now
+Ablage	Shelf
+Start	Start
+Suche	Search
+Bibliothek	Library
+Ruhezustand	Sleep
+Ja	Yes
+Nein	No
+OK	OK
+# ---- Paket 2: Einstellungen (06.11.2026) ----
+ · geschützt	 · secured
+ · gespeichert	 · saved
+ · im Schlaf ≈ {} mA	 · asleep ≈ {} mA
+ · offen	 · open
+4K nur mit 30 Hz — zwei der vier USB-C-Leitungen tragen USB 3	4K only at 30 Hz — two of the four USB-C lanes carry USB 3
+Aktuell	Current
+Alle Klänge von Matrix auf einmal	All Matrix sounds at once
+Alles auf dem Bildschirm grösser oder kleiner — gilt sofort	Everything on screen larger or smaller — applies at once
+Angeschlossen	Connected
+Anzeige	Display
+Anzeigegrösse	Display size
+Anzeigegrösse «{}» ✓	Display size «{}» ✓
+App-Icons	App icons
+Apps ohne Symbol im Thema behalten ihr Matrix-Icon	Apps without an icon in the theme keep their Matrix icon
+Arbeitsspeicher	Memory
+Auf Kopfhörern: Lautstärke gedeckelt, neue Töne blenden sanft ein, Benachrichtigungen leiser	On headphones: volume capped, new sounds fade in gently, notifications quieter
+Auf diesem Gerät regelt das System den Ruhezustand	On this device the system manages sleep
+Aufgeklappt — beide Bildschirme	Open — both screens
+Auflösung	Resolution
+Auflösung {} ✓	Resolution {} ✓
+Ausgabe	Output
+Ausgabe: {}	Output: {}
+Ausgabegerät	Output device
+Ausrichtung	Orientation
+Ausrichtung «{}» festgehalten ✓	Orientation «{}» held ✓
+Ausschalten sperrt — beim Einschalten wartet die Sperre wie am Handy	Switching off locks — on switching on the lock screen waits, as on a phone
+Automatisch ausblenden	Hide automatically
+Automatisch drehen	Rotate automatically
+Automatisch drehen ✓	Rotate automatically ✓
+Automatisch folgt dem Sonnenstand	Automatic follows the sun
+Automatisch: vom Sonnenuntergang bis zum Sonnenaufgang	Automatic: from sunset to sunrise
+Automatische Helligkeit an ✓	Automatic brightness on ✓
+Automatische Helligkeit aus	Automatic brightness off
+Bedienung	Controls
+Bei dunklen Bildschirmen schläft das Gerät tief — die Power-Taste weckt es	With the screens dark the device sleeps deeply — the power button wakes it
+Beim Einstecken spielt der Ton dort; beim Ausstecken wieder am Duo	When plugged in, sound plays there; when unplugged, back on the Duo
+Benachrichtigungen	Notifications
+Berührung	Touch
+Bewegung gespeichert ✓	Motion saved ✓
+Bewegung reduzieren	Reduce motion
+Bild	Picture
+Bilder	Pictures
+Bildschirm am USB-C	Screen on USB-C
+Bildschirmaufnahme	Screen recording
+Bildschirmaufnahmen mit Ton ✓	Screen recordings with sound ✓
+Bildschirmaufnahmen ohne Ton	Screen recordings without sound
+Bildschirme	Screens
+Bildschirme erkennen	Identify screens
+Bildschirmhelligkeit	Screen brightness
+Bis	To
+Controller, Maus und Trackpad.	Controller, mouse and trackpad.
+Darstellung	Look
+Das Bild der Leinwand — je eines für Hell und Dunkel. Die Farben von Matrix folgen dem Bild.	The picture of the canvas — one each for light and dark. Matrix's colours follow the picture.
+Das Dock faltet sich nach drei ruhigen Sekunden weg	The dock folds away after three quiet seconds
+Das Duo bleibt dunkel, Leiste, Dock und Fenster sind auf dem Bildschirm. Aus: Zuklappen sperrt wie bisher	The Duo stays dark; bar, dock and windows are on the screen. Off: closing locks as before
+Das dauert ein paar Sekunden	This takes a few seconds
+Der Bildschirm folgt der Lage des Geräts	The screen follows how the device is held
+Der Sensor meldet sich, wenn sich das Licht ändert	The sensor reports when the light changes
+Die Einstellungen von Matrix — im Fensterhaus, ohne iced.	The settings of Matrix — in the window house, without iced.
+Die Glaselemente fliessen zu einer Insel zusammen: App-Symbol und Text laufen durch, nach oben wischen schliesst	The glass elements flow into one island: app icon and text run through, swipe up to close
+Die Symbole des Themas bekommen die Kachel der Matrix-Icons	The theme's icons get the tile of the Matrix icons
+Die Systemklänge von Matrix — einzeln an und aus, mit Hörprobe.	Matrix's system sounds — on and off one by one, with a preview.
+Die bisherige Fassung öffnet sich …	The previous version opens …
+Die grosse Uhr bricht das Hintergrundbild wie die Leiste — sonst deckend	The large clock refracts the wallpaper like the bar — otherwise opaque
+Diese Feineinstellungen ziehen in der nächsten Stufe um — bis dahin in der bisherigen Fassung	These fine settings move over in the next stage — until then in the previous version
+Dieser Bereich zieht in der nächsten Stufe ins Fensterhaus um.	This area moves into the window house in the next stage.
+Dieser Bildschirm lässt sich nicht regeln	This screen cannot be adjusted
+Dock bleibt stehen ✓	Dock stays ✓
+Dock blendet sich aus ✓	Dock hides ✓
+Dock zeigt Kacheln mit Namen ✓	Dock shows tiles with names ✓
+Dock zeigt nur noch Icons ✓	Dock shows icons only ✓
+Drehsperre an — die Ausrichtung bleibt	Rotation lock on — the orientation stays
+Drehung	Rotation
+Ecken, Symbole und App-Icons.	Corners, symbols and app icons.
+Eckenradius	Corner radius
+Eckenradius gespeichert ✓	Corner radius saved ✓
+Eckig	Square
+Ein kurzer Ton nur links	A short tone on the left only
+Ein kurzer Ton nur rechts	A short tone on the right only
+Einen Moment …	One moment …
+Eingabe	Input
+Eingabe: {}	Input: {}
+Eingabegerät	Input device
+Eingangspegel	Input level
+Einschlafen nach	Sleep after
+Einschlafen nach {} ✓	Sleep after {} ✓
+Einzeln	Single
+Erscheinung	Appearance
+Erscheinung: Automatisch ✓ — folgt der Sonne	Appearance: Automatic ✓ — follows the sun
+Erscheinung: Dunkel ✓ — Sonnen-Rhythmus pausiert	Appearance: Dark ✓ — sun rhythm paused
+Erscheinung: Hell ✓ — Sonnen-Rhythmus pausiert	Appearance: Light ✓ — sun rhythm paused
+Erscheinungsbild	Appearance
+Es wartet, solange Ton läuft, ein Kabel steckt oder das Gerät zugeklappt ist	It waits while sound plays, a cable is plugged in or the device is closed
+Fenster verschieben	Move windows
+Fenster verschieben an ✓	Move windows on ✓
+Fenster verschieben aus	Move windows off
+Festgehalten — dreht sich nicht mit	Held — does not rotate
+Folgt dem Umgebungslicht und lernt, wenn du nachregelst	Follows the ambient light and learns when you adjust
+Formate	Formats
+Formen & Symbole	Shapes & symbols
+Für	For
+Gehörschutz	Hearing protection
+Gehörschutz an ✓	Hearing protection on ✓
+Gehörschutz aus	Hearing protection off
+Gehörschutz gespeichert ✓	Hearing protection saved ✓
+Gehörschutz-Dienst läuft nicht	Hearing protection service is not running
+Geist, Navigation, Touch	Ghost, navigation, touch
+Gerät	Device
+Gerät in den Kopplungsmodus bringen — Kopfhörer, Maus, Tastatur	Put the device into pairing mode — headphones, mouse, keyboard
+Geräte über BlueZ — Kopfhörer, Lautsprecher, Tastaturen.	Devices via BlueZ — headphones, speakers, keyboards.
+Getönt	Tinted
+Gilt als	Counts as
+Grösse auf dem Bildschirm	Size on the screen
+Grösse «{}» ✓	Size «{}» ✓
+Grössen	Sizes
+Grössen, Helligkeit, Night Shift, Drehung, Bildschirme und Ruhezustand.	Sizes, brightness, Night Shift, rotation, screens and sleep.
+Grösser	Larger
+Haltung	Posture
+Hell, Dunkel, Glas und Bewegung.	Light, dark, glass and motion.
+Heute geschlafen	Slept today
+Hinteren Bildschirm ganz ausschalten	Switch the back screen fully off
+Hinterer Bildschirm geht ganz aus ✓	Back screen switches fully off ✓
+Hinterer Bildschirm wird nur dunkel	Back screen only goes dark
+Hintergrund	Wallpaper
+Hintergrund ({}) gesetzt: {}	Wallpaper ({}) set: {}
+Hohe Uhr	Tall clock
+Höchste Lautstärke	Highest volume
+Icon-Stil gespeichert ✓ — Icons werden neu gezeichnet	Icon style saved ✓ — icons are redrawn
+Immer	Always
+In Matrix-Form	In Matrix shape
+Inhalt folgt den Fingern	Content follows the fingers
+Je öfter, desto länger hält der Akku	The more often, the longer the battery lasts
+Kacheln	Tiles
+Kacheln zeigen Name und Hersteller, «Nur Icons» das Matrix-Icon der App	Tiles show name and maker, «Icons only» the app's Matrix icon
+Kein Controller verbunden	No controller connected
+Kein Mikrofon gefunden	No microphone found
+Keine Ausgabe gefunden	No output found
+Keine Bilder gefunden — lege welche in Bilder/Hintergrundbilder	No pictures found — put some in Pictures/Wallpapers
+Keine Netze gefunden	No networks found
+Keine gekoppelten Geräte	No paired devices
+Klassisch	Classic
+Klänge	Sounds
+Kopfhörer	Headphones
+Kopfhörer mit Mikrofon erscheinen hier, sobald sie verbunden sind	Headphones with a microphone appear here once connected
+Kopfhörer — der Schutz wirkt	Headphones — protection active
+Koppeln	Pair
+Koppelt mit «{}»{}	Pairing with «{}»{}
+Koppelt …	Pairing …
+Kopplungsmodus halten — das dauert bis zu 50 Sekunden	Hold pairing mode — this takes up to 50 seconds
+Lange auf eine freie Stelle drücken (Finger oder Maus): das Fenster wackelt und lässt sich ziehen, auch auf einen anderen Bildschirm	Press and hold an empty spot (finger or mouse): the window wiggles and can be dragged, even to another screen
+Lautsprecher	Speaker
+Lautsprecher prüfen	Test speakers
+Lautsprecher — der Schutz ruht	Speaker — protection resting
+Leinwand	Canvas
+Leiste	Bar
+Leiste & Dock	Bar & dock
+Leiste und Dock anpassen	Customise bar and dock
+Leiste und Dock gehen auf den Bildschirm, das vordere Panel bleibt an	Bar and dock go to the screen, the front panel stays on
+Leiste, Dock und Karten aus Glas	Bar, dock and cards of glass
+Links	Left
+Liquid Glass gespeichert ✓	Liquid Glass saved ✓
+Matrix Einstellungen	Matrix Settings
+Maus	Mouse
+Maus und Tastatur per Bluetooth — dann arbeitet das Duo wie ein Computer	Mouse and keyboard over Bluetooth — then the Duo works like a computer
+Maus und Trackpad	Mouse and trackpad
+Mausrad	Mouse wheel
+Mausrad «{}» ✓	Mouse wheel «{}» ✓
+Mehr Platz	More space
+Mikrofon testen	Test microphone
+Mit der Power-Taste sperren	Lock with the power button
+Mit «{}» gekoppelt und verbunden	Paired and connected with «{}»
+Mit «{}» verbunden ✓	Connected to «{}» ✓
+Mitteilungen in der Leiste	Notifications in the bar
+Mitteilungen in der Leiste ✓	Notifications in the bar ✓
+Mitteilungen wieder als Fenster	Notifications as windows again
+Modus	Mode
+Natürliches Scrollen	Natural scrolling
+Natürliches Scrollen gespeichert ✓	Natural scrolling saved ✓
+Netz	Network
+Netze über NetworkManager — Passwörter tippst immer du selbst.	Networks via NetworkManager — you always type passwords yourself.
+Neu suchen	Search again
+Neues Gerät	New device
+Nicht angeschlossen	Not connected
+Night Shift abends ✓	Night Shift in the evening ✓
+Night Shift an ✓	Night Shift on ✓
+Night Shift aus	Night Shift off
+Night Shift nach Zeitplan ✓	Night Shift on schedule ✓
+Noch mehr Platz	Even more space
+Noch nicht eingegriffen	Not stepped in yet
+Nur Icons	Icons only
+Ob der Bildschirm sich mit dem Gerät dreht.	Whether the screen turns with the device.
+Passwort	Password
+Passwort abgelehnt — bitte nochmals	Password refused — please try again
+Passwort für dieses Netz eingeben	Enter the password for this network
+Pegel	Level
+Power-Taste schaltet nur aus	Power button only switches off
+Power-Taste sperrt ✓	Power button locks ✓
+Prozessor	Processor
+Prozessorlast	Processor load
+Rechts	Right
+Region gespeichert ✓	Region saved ✓
+Rund	Round
+Schlüssel erkannt und Wächter-Ruf klingen am Anmeldebildschirm immer.	Key recognised and guard call always sound on the login screen.
+Schmale, hohe Ziffern	Narrow, tall digits
+Schrift in Matrix-Apps	Text in Matrix apps
+Schutz deiner Ohren auf Kopfhörern.	Protection for your ears on headphones.
+Schwarz statt nur dunkel; beim Aufklappen blinkt der vordere kurz. Gilt beim nächsten Zurückklappen	Black instead of just dark; the front one flashes briefly when opened. Applies at the next fold back
+Skalierung des Bildschirms	Screen scaling
+Speicher	Storage
+Speicher je App	Memory per app
+Sperr-Uhr aus Glas ✓	Lock clock of glass ✓
+Sperr-Uhr deckend	Lock clock opaque
+Sperr-Uhr hoch ✓	Lock clock tall ✓
+Sperr-Uhr normal hoch	Lock clock normal height
+Sperrbildschirm	Lock screen
+Sprache	Language
+Sprache & Region	Language & region
+Sprache gespeichert ✓ — gilt für neu gestartete Apps	Language saved ✓ — applies to newly started apps
+Sprache und Formate gelten für neu gestartete Apps — das Tastatur-Layout ab der nächsten Anmeldung.	Language and formats apply to newly started apps — the keyboard layout from the next login.
+Sprich — der Balken zeigt, was ankommt	Speak — the bar shows what arrives
+Spürbare Antwort beim Tippen, Halten, Bestätigen und bei Fehlern	A felt response when tapping, holding, confirming and on errors
+Standard	Standard
+Startlautstärke	Start volume
+Sucht weitere Netze …	Searching for more networks …
+Sucht …	Searching …
+Symbole in Matrix-Form ✓	Icons in Matrix shape ✓
+Symbole in ihrer eigenen Form	Icons in their own shape
+Symbolstil	Symbol style
+Symbolstil gespeichert ✓ — gilt für neu gestartete Apps	Symbol style saved ✓ — applies to newly started apps
+Symbolthema	Icon theme
+Symbolthema «{}» ✓	Icon theme «{}» ✓
+Systemklänge	System sounds
+Systemklänge an ✓	System sounds on ✓
+Systemklänge aus	System sounds off
+Tastatur	Keyboard
+Tastatur-Layout gespeichert ✓	Keyboard layout saved ✓
+Temperatur	Temperature
+Testton	Test tone
+Testton links …	Test tone left …
+Testton rechts …	Test tone right …
+Textgrösse	Text size
+Textgrösse gespeichert ✓ — gilt für neu gestartete Apps	Text size saved ✓ — applies to newly started apps
+Tiefschlaf	Deep sleep
+Tiefschlaf an ✓	Deep sleep on ✓
+Tiefschlaf aus	Deep sleep off
+Tiefschlaf des Chips	Deep sleep of the chip
+Tippen zum Klicken	Tap to click
+Tippen zum Klicken gespeichert ✓	Tap to click saved ✓
+Ton	Sound
+Ton bleibt am Duo	Sound stays on the Duo
+Ton mitschneiden	Record sound
+Ton über den Bildschirm	Sound through the screen
+Ton über den Bildschirm ✓	Sound through the screen ✓
+Topbar, Dock und Fenster kommen auf den vorderen Bildschirm	Top bar, dock and windows come to the front screen
+Uhr aus Glas	Clock of glass
+Umgebungslicht	Ambient light
+Unendliche Leinwand	Infinite canvas
+Verbinde …	Connecting …
+Verbindungen	Connections
+Vibration an ✓	Vibration on ✓
+Vibration aus	Vibration off
+Von	From
+WLAN	Wi-Fi
+WLAN und Bluetooth werden gelesen	Reading Wi-Fi and Bluetooth
+WLAN «{}»	Wi-Fi «{}»
+WLAN über NetworkManager, Bluetooth über BlueZ — Passwörter tippst immer du selbst.	Wi-Fi via NetworkManager, Bluetooth via BlueZ — you always type passwords yourself.
+Was am Rand der Leinwand wohnt: oben die Leiste, unten das Dock.	What lives at the edge of the canvas: the bar at the top, the dock at the bottom.
+Was das Gerät abspielt, kommt mit in den Film	What the device plays goes into the recording
+Was du hörst und wie laut.	What you hear and how loud.
+Was geschieht, wenn die Bildschirme dunkel sind.	What happens when the screens are dark.
+Was in diesem Gerät steckt und wie es ihm gerade geht.	What is inside this device and how it is doing right now.
+Wechsel beim Anmelden («Matrix Leinwand» oder «Niri»)	Switch at login («Matrix Canvas» or «Niri»)
+Weitere Themen (z. B. WhiteSur) nach ~/.local/share/icons legen	Put more themes (e.g. WhiteSur) in ~/.local/share/icons
+Welche Bildschirme angeschlossen sind — und welcher welcher ist.	Which screens are connected — and which is which.
+Welches Erscheinungsbild du gerade wählst	Which appearance you are choosing
+Welches Mikrofon zuhört.	Which microphone listens.
+Weniger Animation, Übergänge springen	Less animation, transitions jump
+Widgets und angeheftete Apps	Widgets and pinned apps
+Wie Matrix aussieht — und die unendliche Fläche, auf der deine Fenster leben.	How Matrix looks — and the infinite surface your windows live on.
+Wie die Leinwand startet.	How the canvas starts.
+Wie gross Fenster und Schrift dort erscheinen	How large windows and text appear there
+Wie gross Schrift und Anzeige sind.	How large text and display are.
+Wie hell der Bildschirm leuchtet.	How bright the screen shines.
+Wie weit ein Dreh am Rad scrollt — ein Rechtsklick wirkt wie langes Antippen	How far a turn of the wheel scrolls — a right click acts like a long press
+Wiederholung	Repeat
+Wirkt auf Bluetooth- und Kabelkopfhörer, nicht auf den Lautsprecher. Jeder neue Ton beginnt leise und wird in gut einer Sekunde lauter.	Works on Bluetooth and wired headphones, not on the speaker. Every new sound starts quiet and rises within about a second.
+Wohin der Ton geht und wie laut.	Where the sound goes and how loud.
+Wählen hält die Ausrichtung fest	Choosing holds the orientation
+Wärme	Warmth
+Wärmere Farben am Abend — schont die Augen und den Schlaf.	Warmer colours in the evening — easier on the eyes and on sleep.
+Xbox- und PlayStation-Controller steuern den Zeiger	Xbox and PlayStation controllers steer the pointer
+Zahlen, Datum und Uhrzeit	Numbers, date and time
+Zeigertempo	Pointer speed
+Zeigertempo (Controller) gespeichert ✓	Pointer speed (controller) saved ✓
+Zeigertempo (Maus) gespeichert ✓	Pointer speed (mouse) saved ✓
+Zeigt auf jedem Bildschirm drei Sekunden seine Nummer	Shows its number on each screen for three seconds
+Zeitplan	Schedule
+Zieht in der nächsten Stufe um — bis dahin in der bisherigen Fassung	Moves over in the next stage — until then in the previous version
+Zugeklappt wie ein Laptop	Closed like a laptop
+Zugeklappt wie ein Laptop ✓	Closed like a laptop ✓
+Zuklappen sperrt wie bisher	Closing locks as before
+Zuletzt {} für {}{}	Last {} for {}{}
+Zurückgeklappt	Folded back
+Zurückgeklappt als zweiter Monitor	Folded back as a second monitor
+Zurückgeklappt bleiben Leiste und Dock auf dem Duo	Folded back, bar and dock stay on the Duo
+Zurückgeklappt — vorne das {}	Folded back — {} in front
+Zurückgeklappt: Leiste und Dock auf dem Bildschirm ✓	Folded back: bar and dock on the screen ✓
+Zustand	State
+dann suchen — gefundene Geräte erscheinen hier	then search — devices found appear here
+erkannt — tippe, um es zu ändern	recognised — tap to change it
+in der bisherigen Fassung der Einstellungen	in the previous version of the settings
+noch kein Wert	no value yet
+noch nicht	not yet
+noch nie seit dem Start	never since the start
+von dir gewählt	chosen by you
+{} % ihrer Lautstärke — System- und Hinweistöne	{} % of their volume — system and alert sounds
+{} % · Grenze {} %	{} % · limit {} %
+{} % · lädt	{} % · charging
+{} % — Gehörschutz: höchstens {} %	{} % — hearing protection: at most {} %
+{} % — lauter geht es auf Kopfhörern nicht	{} % — headphones cannot go louder
+{} % — wenn Kopfhörer sich verbinden	{} % — when headphones connect
+{} Kerne	{} cores
+{} MB Arbeitsspeicher	{} MB memory
+{} MB Arbeitsspeicher · {} MB Grafik	{} MB memory · {} MB graphics
+{} von 10	{} of 10
+{} von {} GB	{} of {} GB
+{} von {} GB belegt	{} of {} GB used
+{} · Gehörschutz {}	{} · hearing protection {}
+{} · {} Eingriffe seit dem Start	{} · {} interventions since the start
+{} öffnen	Open {}
+{}× seit dem Start	{}× since the start
+«{}» gilt jetzt als {} ✓	«{}» now counts as {} ✓
+Übersicht	Overview
+Allgemein	General
+Info	About
+Datenschutz	Privacy
+Apps	Apps
+Aktualisierung	Update
+Entwickler	Developer
+Hintergrundbild	Wallpaper
+Mikrofon	Microphone
+# ---- Paket 3: Seitenleiste, Übersicht, Klänge, Dateien, Tube (06.11.2026) ----
+Softwareupdate	Software update
+Benutzer und Rechte	Users and permissions
+Apps und Rechte	Apps and permissions
+Schweiz	Switzerland
+Deutschland	Germany
+Vereinigtes Königreich	United Kingdom
+International	International
+Systemsprache	System language
+Die erste Sprache der Kette führt; Fehlendes fällt auf Deutsch zurück. Gilt für neu gestartete Apps.	The first language of the chain leads; anything missing falls back to German. Applies to newly started apps.
+Anmelden	Log in
+Abmelden	Log out
+Benachrichtigung	Notification
+Leiser Hinweis	Quiet alert
+Gerät verbunden	Device connected
+Gerät getrennt	Device disconnected
+Arbeitsfläche	Workspace
+Papierkorb	Bin
+Fehler	Error
+Schlüssel erkannt	Key recognised
+Wächter-Ruf	Guard call
+Drei tiefe Pulse steigen ruhig auf	Three low pulses rise calmly
+Dieselben Stufen abwärts	The same steps downwards
+Zwei Pulse aufwärts — gute Nachricht	Two pulses upwards — good news
+Ein einzelner ruhiger Puls	A single calm pulse
+Kurzer gedämpfter Tupfer	Short muted dab
+Tiefe Quinte aufwärts	Low fifth upwards
+Dieselbe Quinte, rückwärts	The same fifth, backwards
+Dunkler Hauch mit Grundpuls	Dark breath with a base pulse
+Gedämpfter Auslöser	Muted shutter
+Dunkles Rascheln, tiefer Punkt	Dark rustle, low point
+Das positive Spiegelbild des Fehlers	The positive mirror image of the error
+Zwei gedämpfte tiefe Pulse — die Referenz	Two muted low pulses — the reference
+Der Wächter — bewusst auffällig; am Login-Screen immer aktiv	The guard — deliberately noticeable; always on at the login screen
+Der Ruf der Wiederherstellung — am Login-Screen immer aktiv	The call of recovery — always on at the login screen
+Drei kurze Klicks — Zeichen, Löschen, Umschalter	Three short clicks — character, delete, shift
+Betriebssystem	Operating system
+Betriebszeit	Uptime
+Dieser Rechner	This computer
+Entlädt	Discharging
+Lädt / am Netz	Charging / on mains
+Rechnername	Computer name
+{} verwendet	{} used
+{} · Kernel {} · seit {}	{} · kernel {} · since {}
+{} · {} Kerne	{} · {} cores
+{} · {} Kerne · {} °C	{} · {} cores · {} °C
+ ({} Verknüpfungen ausgelassen)	 ({} links skipped)
+1 Objekt	1 item
+1 Objekt gelöscht	1 item deleted
+Abbild	Disk image
+Anlegen	Create
+Archiv	Archive
+Auswerfen	Eject
+Auswerfen ging nicht: {}	Eject failed: {}
+Der Stick ist weg	The stick is gone
+Die Dateien liegen schon hier	The files are already here
+Dokument	Document
+Dokumente	Documents
+Einhängen ging nicht: {}	Mount failed: {}
+Endgültig löschen	Delete permanently
+Erst warten, bis die Übertragung fertig ist	Wait until the transfer is finished
+Film	Film
+Hierher kopieren	Copy here
+Hierher verschieben	Move here
+In den Papierkorb	Move to bin
+In den Papierkorb legen	Move to bin
+Keine App zum Öffnen gefunden	No app found to open this
+Kopieren nach …	Copy to …
+Kopiert	Copied
+Leer	Empty
+Lädt …	Loading …
+lädt …	loading …
+Löschen ging nicht: {}	Delete failed: {}
+Löscht …	Deleting …
+Matrix Dateien	Matrix Files
+Musik	Music
+Nach Name	By name
+nach Name	by name
+Name des neuen Ordners …	Name of the new folder …
+Neuer Name …	New name …
+Neuer Ordner	New folder
+Neueste zuerst	Newest first
+neueste zuerst	newest first
+Nicht fertig: {}	Not finished: {}
+Ordner	Folder
+Ordner durchsehen, Dateien verschieben und kopieren — auch auf den USB-Stick, mit Fortschritt und sicherem Auswerfen.	Browse folders, move and copy files — onto the USB stick too, with progress and safe ejecting.
+Ordner nicht lesbar — {}	Folder not readable — {}
+Ordner «{}» angelegt	Folder «{}» created
+Orte	Places
+Papierkorb nicht möglich	Bin not possible
+Persönlicher Ordner	Home folder
+Umbenannt in «{}»	Renamed to «{}»
+Umbenennen	Rename
+Ungültiger Name	Invalid name
+Verschieben nach …	Move to …
+Verschiebt	Moving
+Wird abgebrochen …	Cancelling …
+Wird geladen	Loading
+Wirft aus …	Ejecting …
+links ein Ziel wählen	choose a destination on the left
+nicht lesbar	not readable
+{} ({} von {})	{} ({} of {})
+{} Objekte	{} items
+{} Objekte gelöscht	{} items deleted
+{} ausgewählt	{} selected
+{} endgültig vom Stick löschen?	Delete {} permanently from the stick?
+{} frei	{} free
+{} in den Papierkorb legen?	Move {} to the bin?
+{} · hängt ein …	{} · mounting …
+«{}» erkannt — links antippen	«{}» recognised — tap it on the left
+«{}» gibt es hier schon	«{}» already exists here
+«{}» kann entfernt werden	«{}» can be removed
+«{}» wird ausgeworfen …	Ejecting «{}» …
+«{}» wird eingehängt …	Mounting «{}» …
+Öffnen	Open
+über «Orte» ein Ziel wählen	choose a destination under «Places»
+Bitte am iPhone entsperren und „Vertrauen“ antippen.	Please unlock the iPhone and tap “Trust”.
+Das iPhone ist noch in Benutzung.	The iPhone is still in use.
+Das iPhone ließ sich nicht öffnen.	The iPhone could not be opened.
+Albumname	Album name
+Alle	All
+App-Verknüpfung	App shortcut
+Art	Kind
+Dateiendung geändert — Enter bestätigt, Esc bricht ab	File extension changed — Enter confirms, Esc cancels
+Dieser Ordner ist leer	This folder is empty
+Duplizieren	Duplicate
+Galerie	Gallery
+Geändert	Modified
+Größe	Size
+Grösse	Size
+Hardline ist geschützt	Hardline is protected
+In Programme installieren	Install to Programs
+In diesem Ordner liegt alles, was dieses Gerät im Hardline-Netz besitzt — deine Seite, das Regal, die Schlüssel. Dein Passwort öffnet ihn.	This folder holds everything this device owns in the Hardline network — your page, the shelf, the keys. Your password opens it.
+Informationen	Information
+Keine Treffer	No results
+Konfiguration	Configuration
+Leeren …	Empty …
+Neues Album	New album
+Neues Album:	New album:
+Noch keine Bilder oder Videos — lege welche in die Galerie.	No pictures or videos yet — put some in the gallery.
+Ort	Location
+Pfad kopieren	Copy path
+Programme	Programs
+Protokolldatei	Log file
+Papierkorb unwiderruflich leeren? Noch ein Klick bestätigt — Esc bricht ab	Empty the bin for good? One more click confirms — Esc cancels
+Wirklich leeren?	Really empty?
+Woher	Source
+Zuhause	Home
+iPhone nicht bereit	iPhone not ready
+{} Objekte · {}	{} items · {}
+{} verfügbar	{} available
+{} von {} ausgewählt · {}	{} of {} selected · {}
+Änderungsdatum	Date modified
+Bibliothek · {}	Library · {}
+Datei löschen	Delete file
+Datei nicht lesbar	File not readable
+Diese Playlist ist leer	This playlist is empty
+Download scheiterte: {}	Download failed: {}
+Erst oben eine Playlist anlegen	Create a playlist above first
+Gespeichert in {}/Matrix Tube	Saved in {}/Matrix Tube
+Heruntergeladen	Downloaded
+Im Hintergrund: {} {} · {}	In the background: {} {} · {}
+Leer — bei einem Download «+» tippen.	Empty — tap «+» on a download.
+Name oben eingeben, dann ↵	Type a name above, then ↵
+Neu	New
+Noch keine — «Neu» legt eine an, «+» bei einem Download füllt sie.	None yet — «New» creates one, «+» on a download fills it.
+Noch nichts — in der Wiedergabe-Ansicht «MP3» oder «MP4» wählen.	Nothing yet — choose «MP3» or «MP4» in the player view.
+Playlist löschen	Delete playlist
+Playlist «{}» gelöscht — die Dateien bleiben	Playlist «{}» deleted — the files stay
+Playlists · {}	Playlists · {}
+Wirklich löschen?	Really delete?
+wandelt um	converting
+{} Titel	{} tracks
+{} wartet	{} waiting
+{} wartet — {} vor ihm	{} waiting — {} ahead of it
+Abschnitt	Section
+Abspann	Outro
+Antippen zum Weiterschauen	Tap to keep watching
+Auf YouTube suchen …	Search YouTube …
+Auto: 720p (Gerät kam nicht nach)	Auto: 720p (device could not keep up)
+Bist du noch da?	Are you still there?
+Bühne — wähle ein Video in der Liste.	Stage — choose a video in the list.
+Eigenwerbung	Self-promotion
+Keine Treffer — anders formulieren?	No results — try other words?
+Name der neuen Playlist …	Name of the new playlist …
+Name leer oder schon vergeben	Name empty or already taken
+Neuer Name der Playlist …	New name for the playlist …
+Nicht abspielbar — {}	Cannot play — {}
+Suche oben eingeben — ohne Werbung, mit SponsorBlock.	Type a search above — no ads, with SponsorBlock.
+YouTube ohne Werbung, mit SponsorBlock, Vorrat und Ton-Uhr — fürs Duo gebaut.	YouTube without ads, with SponsorBlock, buffer and audio clock — built for the Duo.
+Zuletzt gesucht	Recent searches
+im Hintergrund	in the background
+{} Treffer	{} results
+Übersprungen: {}	Skipped: {}
+Als Nächstes	Up next
+Als Nächstes in {} s: {}	Up next in {} s: {}
+Als Nächstes: {}	Up next: {}
+Keine angeboten	None offered
+Ja, weiter	Yes, continue
+Läuft	Playing
+Läuft: {}	Playing: {}
+Playlist «{}» · {} von {}	Playlist «{}» · {} of {}
+Schlaftimer — pausiert und fragt «Bist du noch da?»	Sleep timer — pauses and asks «Are you still there?»
+Der Schlaftimer hat pausiert. Bildschirme aus in {}:{}.	The sleep timer has paused. Screens off in {}:{}.
+Videoende	End of video
+Wiedergabeliste · {} von {}	Playlist · {} of {}
+Zurück zur Suche	Back to search
+{} min	{} min
+# ---- Zeit, relativ ----
+gerade eben	just now
+vor {} s	{} s ago
+vor {} min	{} min ago
+vor {} h	{} h ago
+vor einem Tag	a day ago
+vor {} Tagen	{} days ago
+vor {} Min.	{} min ago
+vor {} Std.	{} h ago
+gestern	yesterday
+vorgestern	the day before yesterday
+heute	today
+{} von {}	{} of {}
+{} von {} ausgewählt	{} of {} selected
+Compositor (niri)	Compositor (niri)
+Kontextmenü	Context menu
+Topbar	Top bar
+# ---- App-Namen und -Beschreibungen (06.11.2026) ----
+Matrix Aufnahme	Matrix Capture
+Matrix Hilfe	Matrix Help
+Matrix Einkauf	Matrix Shopping
+Matrix Zentrale	Matrix Control Centre
+Matrix Start	Matrix Start
+Matrix Hintergrund	Matrix Wallpaper
+Matrix Tastatur	Matrix Keyboard
+Matrix Sperre	Matrix Lock
+Matrix Leiste	Matrix Bar
+Matrix Wächter	Matrix Watchdog
+Duo Diagnose	Duo Diagnostics
+Vorlesen	Read aloud
+Pokémon Smaragd	Pokémon Emerald
+Die Duo-Kamera ohne Android: Live-Bild und 11-MP-Fotos	The Duo camera without Android: live picture and 11 MP photos
+Bildschirmfoto und -film — das Aufnahme-Panel	Screenshot and screen recording — the capture panel
+Der Dateimanager — Seitenleiste, Liste, Pfadleiste, Papierkorb	The file manager — sidebar, list, path bar, bin
+Alles Wissenswerte zu MatrixKit — für Nutzer und Entwickler	Everything worth knowing about MatrixKit — for users and developers
+Wortwesen krabbeln über eine Textseite und sammeln ihre Lieblingswörter	Word creatures crawl across a page of text and collect their favourite words
+Der Flugsimulator für dein Leben	The flight simulator for your life
+Videos ansehen — Bildschirmaufnahmen zuerst	Watch videos — screen recordings first
+Erscheinungsbild, Anzeige und Verhalten des Systems einstellen	Set the system's appearance, display and behaviour
+Einkaufslisten: Produkte antippen, Menge wählen, im Laden abstreichen	Shopping lists: tap products, choose the amount, tick them off in the shop
+Die Kommandozeile — alacritty-Maschinenhaus, Matrix-Karosserie	The command line — alacritty engine room, Matrix bodywork
+YouTube ohne Werbung, mit SponsorBlock — fürs Duo gebaut	YouTube without ads, with SponsorBlock — built for the Duo
+Game Boy Advance: oben das Spiel, unten die Steuerung	Game Boy Advance: the game on top, the controls below
+Zustand des Duo auf einen Blick – Akku, Speicher, Wärme, Abstürze	The Duo's state at a glance – battery, storage, heat, crashes
+Lokales Sprachmodell (Qwen, Gemma) ohne Internet	Local language model (Qwen, Gemma) without internet
+Text mit Thorsten vorlesen und als MP3 speichern	Read text aloud with Thorsten and save it as MP3
+OpenRA Red Alert über beide Bildschirme: oben das Schlachtfeld, unten die Bedienung	OpenRA Red Alert across both screens: the battlefield on top, the controls below
+Matrix Datenträger	Matrix Disks
+Matrix Farben	Matrix Colours
+Matrix Kacheln	Matrix Tiles
+Matrix Leinwand	Matrix Canvas
+Matrix Schlüssel	Matrix Keys
+Matrix Werft	Matrix Shipyard
+Matrix Wiederherstellung	Matrix Recovery
+Im Web suchen	Search the web
+# ---- Gekoppelte Laptops (06.11.2026) ----
+Laptops	Laptops
+Laptops, denen du in Morpheus vertraut hast. Sie sehen deine Dateien und Fotos nur über das USB-Kabel.	Laptops you have trusted in Morpheus. They see your files and photos only over the USB cable.
+Gekoppelte Laptops	Paired laptops
+Morpheus · nur über das USB-Kabel	Morpheus · only over the USB cable
+Gekoppelt am {} · nur über das USB-Kabel	Paired on {} · only over the USB cable
+Entziehen	Withdraw
+Wirklich entziehen?	Really withdraw?
+Kein Laptop gekoppelt	No laptop paired
+In Morpheus am Laptop «Koppeln» tippen — das Duo fragt dann hier, ob es vertrauen soll	Tap «Pair» in Morpheus on the laptop — the duo then asks here whether to trust it
+«{}» hat keinen Zugriff mehr ✓	«{}» no longer has access ✓
+Variante	Variant
+Hoher Kontrast	High contrast
+Legacy	Legacy
+Symbolthema «{}» · {} ✓	Icon theme «{}» · {} ✓
+Die Apps zeigen ihre eigenen Symbole — wie bei GNOME	Apps show their own icons — as in GNOME

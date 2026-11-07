@@ -1,0 +1,16 @@
+diff --git a/wlfwd.c b/wlfwd.c
+index 9bf8090..e63dd6a 100644
+--- a/wlfwd.c
++++ b/wlfwd.c
+@@ -589,7 +589,10 @@ static int bring_up(const char *fw_dir, const char *mac)
+ 
+ 	set_timeout(5);
+ 	snprintf(regdb, sizeof(regdb), "%s/regdb.bin", fw_dir);
+-	if (upload(WLFW_BDF_DOWNLOAD, regdb, board_id, BDF_TYPE_REGDB))
++	/* Older firmware (e.g. Surface Duo 1, 2020/2023 modem image) ships no regdb.bin: optional */
++	if (access(regdb, R_OK))
++		log("no %s, skipping REGDB download\n", regdb);
++	else if (upload(WLFW_BDF_DOWNLOAD, regdb, board_id, BDF_TYPE_REGDB))
+ 		return -1;
+ 	if (upload(WLFW_BDF_DOWNLOAD, pick_bdf(fw_dir, board_id), board_id,
+ 		   BDF_TYPE_BIN))

@@ -1,0 +1,137 @@
+// Matrix — canonical user layer, identical on every device (R111).
+// Device-only extras live in device.kdl; generated files keep their
+// own includes (dual-accept: new English name first, legacy second).
+
+// Canvas mode (scroll <-> classic), written by canvas-mode
+include optional=true "canvas-mode.kdl"
+// Output background colors, written by sync-kdeglobals
+include optional=true "farben.kdl"  // legacy pre-R111 name (loses on merge)
+include optional=true "backdrop-colors.kdl"
+// Focus-ring/frame colors from the Matrix color chain (matugen)
+include optional=true "dms/colors.kdl"  // legacy pre-R111 path (loses on merge)
+include optional=true "palette.kdl"
+// Keyboard layout from Einstellungen -> Sprache & Region (R100)
+include optional=true "dms/eingabe.kdl"  // legacy pre-R111 path (loses on merge)
+include optional=true "input-layout.kdl"
+// Device-only extras (workarounds, hardware quirks)
+include optional=true "device.kdl"
+
+// Cursor matching the WhiteSur icons, uniform for XWayland apps too
+cursor {
+    xcursor-theme "WhiteSur-cursors"
+    xcursor-size 24
+}
+
+environment {
+    XCURSOR_THEME "WhiteSur-cursors"
+    XCURSOR_SIZE "24"
+    // Scale the Steam UI correctly on 4K
+    STEAM_FORCE_DESKTOPUI_SCALING "1.5"
+}
+
+// Window corners closer to the reference (default was 6)
+window-rule {
+    geometry-corner-radius 10
+    clip-to-geometry true
+    draw-border-with-background false
+}
+
+// The built-in alt-tab highlight follows the corner language
+recent-windows {
+    highlight {
+        corner-radius 18
+    }
+}
+
+// === "Minimize" via the shelf workspace (reference feel) ===
+// R201: The FIRST named workspace is home — boot focuses
+// workspace 1, and that must never be the shelf nor the stage
+// (raum), otherwise autostart windows move in there.
+workspace "arbeit"
+workspace "shelf"
+// R197: The room's own stage — empty except for the wallpaper,
+// so no window shimmers through behind the veil.
+workspace "raum"
+
+
+binds {
+    // R69: capture grammar (capture shortcuts)
+    Mod+Shift+3 { spawn "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-capture foto"; }
+    Mod+Shift+4 { spawn "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-capture bereich"; }
+    Mod+Shift+5 { spawn "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-capture panel"; }
+    Print { spawn "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-capture foto"; }
+    Mod+M hotkey-overlay-title="Fenster ablegen (minimieren)" { move-window-to-workspace "shelf" focus=false; }
+    Mod+Shift+M hotkey-overlay-title="Ablage anzeigen/zurück" { spawn "sh" "-c" "touch /run/user/1000/matrix-shelf-visit; niri msg action focus-workspace shelf"; }
+    Mod+Ctrl+M hotkey-overlay-title="Fenster zurückholen" { move-window-to-workspace 1; }
+    Mod+Shift+D hotkey-overlay-title="Leinwand-Modus: Scroll/Klassisch" { spawn "canvas-mode"; }
+    // Matrix Start / search palette (apps, open windows, actions, calculator)
+    Mod+Space hotkey-overlay-title="Matrix Start" { spawn "matrix-start"; }
+    // Volume & brightness -> matrix-osd (Dynamic Dock + reference tick), R30
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "matrix-osd" "louder"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "matrix-osd" "quieter"; }
+    XF86AudioMute allow-when-locked=true { spawn "matrix-osd" "mute"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "matrix-osd" "mic"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "matrix-osd" "brighter"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "matrix-osd" "darker"; }
+}
+
+// === Matrix shell (bar, dock, services) ===
+spawn-at-startup "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-bar --reserve"
+spawn-at-startup "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-dock --reserve"
+spawn-at-startup "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-notifications"
+// R120: the context-menu service starts warm — right clicks then hit
+// a resident daemon instead of a cold app start.
+spawn-at-startup "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-context"
+spawn-at-startup "sh" "-c" "sleep 3; PATH=$HOME/.local/bin:$PATH exec matrix-wallpaper"
+spawn-at-startup "sh" "-c" "sleep 8; PATH=$HOME/.local/bin:$PATH exec matrix-watchdog"
+// R58: the on-screen keyboard guard — shows the keyboard when an
+// input field is focused and no physical keyboard is attached
+spawn-at-startup "sh" "-c" "PATH=$HOME/.local/bin:$PATH exec matrix-keyboard"
+// R180: the Hardline node — ONE identity per device, serving every
+// window (Rabbit) over its local socket. Starts with the session.
+// R209: a duo device (Surface Duo) carries no Hardline.
+spawn-at-startup "sh" "-c" "grep -qs 'Surface Duo' /proc/device-tree/model || PATH=$HOME/.local/bin:$PATH exec hardline-node serve"
+// Login greeting (01) — wait briefly until PipeWire stands (R30)
+spawn-at-startup "sh" "-c" "sleep 2; exec matrix-osd login"
+
+// === Reference engine room (round 32) — read empirically from the reference ===
+input {
+    keyboard {
+        repeat-delay 375
+        repeat-rate 11
+    }
+    touchpad {
+        tap
+        natural-scroll
+        accel-speed 0.3
+        dwt
+    }
+}
+
+// R51: ONE air everywhere — gaps 10; R111: the widths that used to
+// hide in the generated dms/layout.kdl are doctrine, so they live
+// here now (focus-ring doctrine: user verdict 2026-07-20, 2 px).
+layout {
+    gaps 10
+    focus-ring {
+        width 2
+    }
+    border {
+        width 2
+    }
+}
+
+// R56: Matrix Web is TWO windows (chrome + WebKit carrier); both
+// float, the docking coupling stacks them.
+window-rule {
+    match app-id="^matrix-web$"
+    open-floating true
+}
+window-rule {
+    match app-id="^matrix-web-content$"
+    open-floating true
+}
+
+// R106: liquid glass rule lives in its own include so the settings
+// toggle can rewrite it (empty file = off); niri reloads it live.
+include optional=true "glass.kdl"

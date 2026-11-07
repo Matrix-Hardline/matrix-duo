@@ -1,0 +1,31 @@
+diff --git a/libssc.map b/libssc.map
+index d5a2ee2..fa99edf 100644
+--- a/libssc.map
++++ b/libssc.map
+@@ -45,6 +45,26 @@ LIBSSC_0.4.0 {
+ 		ssc_sensor_magnetometer_close;
+ 		ssc_sensor_magnetometer_close_finish;
+ 		ssc_sensor_magnetometer_close_sync;
++		ssc_sensor_hinge_angle_get_type;
++		ssc_sensor_hinge_angle_new;
++		ssc_sensor_hinge_angle_new_finish;
++		ssc_sensor_hinge_angle_new_sync;
++		ssc_sensor_hinge_angle_open;
++		ssc_sensor_hinge_angle_open_finish;
++		ssc_sensor_hinge_angle_open_sync;
++		ssc_sensor_hinge_angle_close;
++		ssc_sensor_hinge_angle_close_finish;
++		ssc_sensor_hinge_angle_close_sync;
++		ssc_sensor_hall_get_type;
++		ssc_sensor_hall_new;
++		ssc_sensor_hall_new_finish;
++		ssc_sensor_hall_new_sync;
++		ssc_sensor_hall_open;
++		ssc_sensor_hall_open_finish;
++		ssc_sensor_hall_open_sync;
++		ssc_sensor_hall_close;
++		ssc_sensor_hall_close_finish;
++		ssc_sensor_hall_close_sync;
+ 		ssc_sensor_proximity_new;
+ 		ssc_sensor_proximity_new_finish;
+ 		ssc_sensor_proximity_new_sync;

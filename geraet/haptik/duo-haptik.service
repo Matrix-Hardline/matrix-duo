@@ -1,0 +1,11 @@
+[Unit]
+Description=duo: kurzer Vibrationsimpuls je Tastenanschlag (da7280, Socket /run/duo/haptik.sock)
+After=systemd-udev-settle.service
+
+[Service]
+ExecStart=/usr/local/bin/duo-haptik
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

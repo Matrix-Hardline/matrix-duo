@@ -1,0 +1,158 @@
+diff --git a/data/meson.build b/data/meson.build
+index 76dc22b..48a4dd8 100644
+--- a/data/meson.build
++++ b/data/meson.build
+@@ -27,6 +27,8 @@ msgs = [
+   'sensor-magnetometer',
+   'sensor-rotationvector',
+   'sensor-gyroscope',
++  'sensor-hinge-angle',
++  'sensor-hall',
+ ]
+ sources_gen = []
+ headers_gen = []
+diff --git a/src/libssc-cli.c b/src/libssc-cli.c
+index 5560862..dbcbfff 100644
+--- a/src/libssc-cli.c
++++ b/src/libssc-cli.c
+@@ -112,6 +112,40 @@ static void light_measurement (SSCSensorLight *sensor, gfloat intensity, gpointe
+ 
+ /*****************************************************************************/
+ 
++static gboolean
++hinge_angle_close_cb (SSCSensorHingeAngle *self)
++{
++	g_autoptr (GError) err = NULL;
++	if (!ssc_sensor_hinge_angle_close_sync (self, NULL, &err))
++		g_printf ("Unable to close hinge angle sensor: %s\n", err ? err->message : "UNKNOWN");
++	g_debug ("Hinge angle sensor disabled");
++	exit(0);
++	return G_SOURCE_REMOVE;
++}
++
++static void hinge_angle_measurement (SSCSensorHingeAngle *sensor, gfloat angle, gpointer user_data)
++{
++	g_printf ("Hinge angle sensor measurement: %.1f deg\n", angle);
++	fflush(stdout);
++}
++
++static gboolean
++hall_close_cb (SSCSensorHall *self)
++{
++	g_autoptr (GError) err = NULL;
++	if (!ssc_sensor_hall_close_sync (self, NULL, &err))
++		g_printf ("Unable to close hall sensor: %s\n", err ? err->message : "UNKNOWN");
++	g_debug ("Hall sensor disabled");
++	exit(0);
++	return G_SOURCE_REMOVE;
++}
++
++static void hall_measurement (SSCSensorHall *sensor, gboolean near, gpointer user_data)
++{
++	g_printf ("Hall sensor measurement: %s\n", near ? "NEAR" : "FAR");
++	fflush(stdout);
++}
++
+ static gboolean
+ proximity_close_cb (SSCSensorProximity *self)
+ {
+@@ -168,7 +202,7 @@ int main(int argc, char *argv[])
+ 	const GOptionEntry options[] = {
+ 		{ "version", 0, 0, G_OPTION_ARG_NONE, &print_version, "Print version information and exit.", NULL },
+ 		{ "debug", 'v', 0, G_OPTION_ARG_NONE, &debug, "Enable debug logs.", NULL },
+-		{ "sensor", 0, 0, G_OPTION_ARG_STRING, &sensor_str, "Enable a sensor. Supported sensors: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass'", NULL },
++		{ "sensor", 0, 0, G_OPTION_ARG_STRING, &sensor_str, "Enable a sensor. Supported sensors: 'proximity', 'light', 'accelerometer', 'magnetometer', 'compass', 'gyroscope', 'hinge_angle', 'hall'", NULL },
+ 		{ "timeout", 0, 0, G_OPTION_ARG_INT64, &timeout, "Number of seconds before this will timeout [default 10]", NULL },
+ 		{ NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
+ 	};
+@@ -199,7 +233,55 @@ int main(int argc, char *argv[])
+ 
+ 	g_info("libssc %d.%d.%d starting", LIBSSC_MAJOR_VERSION, LIBSSC_MINOR_VERSION, LIBSSC_PATCH_VERSION);
+ 
+-	if (g_strcmp0 (sensor_str, "proximity") == 0) {
++	if (g_strcmp0 (sensor_str, "hinge_angle") == 0) {
++
++		SSCSensorHingeAngle *hinge = ssc_sensor_hinge_angle_new_sync (NULL, &err);
++
++		if (!hinge) {
++
++			g_printf ("Unable to initialize hinge angle sensor: %s\n", err ? err->message : "UNKNOWN");
++
++			return INIT_FAIL_EXIT_CODE;
++
++		}
++
++		g_signal_connect (hinge, "measurement", G_CALLBACK (hinge_angle_measurement), NULL);
++
++		if (!ssc_sensor_hinge_angle_open_sync (hinge, NULL, &err)) {
++
++			g_printf ("Unable to open hinge angle sensor: %s\n", err ? err->message : "UNKNOWN");
++
++			return OPEN_FAIL_EXIT_CODE;
++
++		}
++
++		g_timeout_add_seconds (timeout, (GSourceFunc)hinge_angle_close_cb, hinge);
++
++	} else if (g_strcmp0 (sensor_str, "hall") == 0) {
++
++		SSCSensorHall *hall = ssc_sensor_hall_new_sync (NULL, &err);
++
++		if (!hall) {
++
++			g_printf ("Unable to initialize hall sensor: %s\n", err ? err->message : "UNKNOWN");
++
++			return INIT_FAIL_EXIT_CODE;
++
++		}
++
++		g_signal_connect (hall, "measurement", G_CALLBACK (hall_measurement), NULL);
++
++		if (!ssc_sensor_hall_open_sync (hall, NULL, &err)) {
++
++			g_printf ("Unable to open hall sensor: %s\n", err ? err->message : "UNKNOWN");
++
++			return OPEN_FAIL_EXIT_CODE;
++
++		}
++
++		g_timeout_add_seconds (timeout, (GSourceFunc)hall_close_cb, hall);
++
++	} else if (g_strcmp0 (sensor_str, "proximity") == 0) {
+ 		SSCSensorProximity *proximity = ssc_sensor_proximity_new_sync (NULL, &err);
+ 		if (!proximity) {
+ 			g_printf ("Unable to initialize proximity sensor: %s\n", err ? err->message : "UNKNOWN");
+diff --git a/src/libssc.h b/src/libssc.h
+index 4b42241..7926fd1 100644
+--- a/src/libssc.h
++++ b/src/libssc.h
+@@ -25,5 +25,7 @@
+ #include <libssc-sensor-light.h>
+ #include <libssc-sensor-proximity.h>
+ #include <libssc-sensor-gyroscope.h>
++#include <libssc-sensor-hinge-angle.h>
++#include <libssc-sensor-hall.h>
+ 
+ #endif /* _LIBSSC_H_ */
+diff --git a/src/meson.build b/src/meson.build
+index 5ea1dff..5762db9 100644
+--- a/src/meson.build
++++ b/src/meson.build
+@@ -35,6 +35,8 @@ headers += files(
+   'libssc-sensor-magnetometer.h',
+   'libssc-sensor-compass.h',
+   'libssc-sensor-gyroscope.h',
++  'libssc-sensor-hinge-angle.h',
++  'libssc-sensor-hall.h',
+ )
+ 
+ install_headers(
+@@ -52,6 +54,8 @@ sources += files(
+   'libssc-sensor-magnetometer.c',
+   'libssc-sensor-compass.c',
+   'libssc-sensor-gyroscope.c',
++  'libssc-sensor-hinge-angle.c',
++  'libssc-sensor-hall.c',
+ )
+ 
+ cli_sources = files(

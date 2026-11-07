@@ -1,0 +1,9 @@
+[Unit]
+Description=Surface Duo: Speicher-/Bus-Regler wie Android (NPU-DDR-Stimme frei, Tiefschlaf CXSD)
+After=sysinit.target
+[Service]
+Type=oneshot
+ExecStart=/bin/sh /usr/local/bin/duo-speicher.sh
+RemainAfterExit=yes
+[Install]
+WantedBy=multi-user.target

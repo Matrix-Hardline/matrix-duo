@@ -1,0 +1,8 @@
+/* Surface Duo: GTK controls sized for the finger (275 %, one finger). Lives in ~/.config/gtk-4.0/ and gtk-3.0/
+   (on 30.10. the file was wrongly placed at ~/.config/gtk.css and never took effect; corrected 31.10.). */
+headerbar button, .titlebar button, windowcontrols button { min-width: 44px; min-height: 44px; }
+headerbar { min-height: 56px; }
+/* Menus (e.g. ☰ in Software, Files): entries 44 px tall like on a phone, more spacing */
+popover.menu modelbutton, popover.menu .menuitem, menu menuitem { min-height: 44px; padding-top: 4px; padding-bottom: 4px; }
+popover.menu contents { padding: 8px; }
+popover.menu separator { margin-top: 6px; margin-bottom: 6px; }

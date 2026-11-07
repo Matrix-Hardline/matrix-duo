@@ -1,0 +1,2 @@
+[sm/puri/phosh]
+favorites=['org.mozilla.firefox.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Ptyxis.desktop', 'org.gnome.Software.desktop', 'org.gnome.Settings.desktop']

@@ -1,0 +1,497 @@
+#!/usr/bin/python3
+"""morpheus-helfer (Morpheus M3, 06.11.2026): the root part of the installer in the live system of a Surface Duo.
+
+Runs ONLY in the live system (/etc/morpheus-live, set by the laptop at RAM boot). The user interface (login screen in
+installer mode, account greetd) talks via /run/morpheus.sock (one JSON line there, one back):
+  {"tu": "stand"}                     -> state: phase, steps, message, inventory, plan
+  {"tu": "sicherung", "ja": true}     -> order a full backup from the laptop (or skip it)
+  {"tu": "plan", "android_gib": 32}   -> compute the split (nothing is written)
+  {"tu": "installieren", "plan": id, "bestaetigt": "ANDROID LÖSCHEN"}  -> execute
+  {"tu": "antwort", "ja": true}       -> answer to the recovery's question (Matrix already installed)
+  {"tu": "neustart"}
+If Matrix is already installed, the phase is «recovery»: it is driven from the laptop (morpheus-recovery over ssh), the Duo
+shows the progress (/run/morpheus/recovery) and asks the one question (/run/morpheus/frage).
+Transfers are done by the laptop (it has a one-time key for root@live system): the helper writes its need
+to /run/morpheus/bedarf («sicherung» / «abbild <ziel>»), the laptop delivers and writes /run/morpheus/laptop.
+
+PROTECTION: writes go exclusively to LUN 0 (sda): the partition table, metadata, misc, userdata and the new
+partition «fedora». Every write site checks name -> device -> size against the confirmed plan. With /etc/morpheus-trocken
+(dry run) NOTHING is written — the steps only describe what they would do.
+"""
+import json
+import os
+import re
+import socket
+import subprocess
+import sys
+import threading
+import time
+
+LIVE = "/etc/morpheus-live"
+TROCKEN = "/etc/morpheus-trocken"
+SOCK = "/run/morpheus.sock"
+RUN = "/run/morpheus"
+DISK = "/dev/sda"
+MIB = 1024 * 1024
+GIB = 1024 * MIB
+FEDORA_TYPE = "0FC63DAF-8483-4772-8E79-3D69D8477DE4"
+CONFIRM = "ANDROID LÖSCHEN"
+MIN_ANDROID_GIB = 8
+MIN_MATRIX_GIB = 16
+# What Android needs before userdata and is never touched (LUN 0 of a Surface Duo).
+EXPECTED_BEFORE = ["ssd", "persist", "metadata", "frp", "misc"]
+
+
+# ---------------------------------------------------------------- pure calculation (tested)
+
+def parse_dump(text):
+    """sfdisk -d -> (header {key: value}, partitions [{dev, start, size, name, rest}])."""
+    head, parts = {}, []
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        m = re.match(r"^(\S+)\s*:\s*(.*)$", line)
+        if m and m.group(1).startswith("/dev/"):
+            fields = {}
+            for f in re.findall(r'(\w[\w-]*)=("[^"]*"|[^,]+)', m.group(2)):
+                fields[f[0]] = f[1].strip().strip('"')
+            parts.append({"dev": m.group(1), "start": int(fields["start"]), "size": int(fields["size"]),
+                          "name": fields.get("name", ""), "line": line})
+        elif ":" in line:
+            k, v = line.split(":", 1)
+            head[k.strip()] = v.strip()
+    return head, parts
+
+
+def align_up(x, a):
+    return (x + a - 1) // a * a
+
+
+def plan(dump_text, android_gib):
+    """The new table for «Android keeps android_gib GiB, the rest becomes Matrix». Raises ValueError with the reason."""
+    head, parts = parse_dump(dump_text)
+    ss = int(head.get("sector-size", "512"))
+    last = int(head["last-lba"])
+    names = [p["name"] for p in parts]
+    if "fedora" in names:
+        raise ValueError("Auf diesem Duo ist Matrix schon installiert (Partition «fedora» vorhanden)")
+    if names[-1:] != ["userdata"] or names[:-1] != EXPECTED_BEFORE:
+        raise ValueError("Unbekannte Aufteilung: " + ", ".join(names))
+    ud = parts[-1]
+    align = MIB // ss
+    new_ud = android_gib * GIB // ss
+    fed_start = align_up(ud["start"] + new_ud, align)
+    fed_size = (last + 1 - fed_start) // align * align
+    total_gib = (last + 1 - ud["start"]) * ss / GIB
+    if android_gib < MIN_ANDROID_GIB:
+        raise ValueError(f"Android braucht mindestens {MIN_ANDROID_GIB} GB")
+    if fed_size * ss < MIN_MATRIX_GIB * GIB:
+        raise ValueError(f"Für Matrix bleiben weniger als {MIN_MATRIX_GIB} GB")
+    if new_ud >= ud["size"]:
+        raise ValueError("Android hat schon weniger Platz als gewählt")
+    lines = []
+    for k in ("label", "label-id", "device", "unit", "first-lba", "last-lba", "table-length", "sector-size"):
+        if k in head:
+            lines.append(f"{k}: {head[k]}")
+    lines.append("")
+    for p in parts[:-1]:
+        lines.append(p["line"])
+    lines.append(re.sub(r"size=\s*\d+", f"size={new_ud:>12}", ud["line"]))
+    n = int(re.sub(r"\D", "", ud["dev"][-3:]) or "6") + 1
+    dev_base = re.sub(r"\d+$", "", ud["dev"])
+    lines.append(f'{dev_base}{n} : start={fed_start:>12}, size={fed_size:>12}, type={FEDORA_TYPE}, name="fedora"')
+    info = {
+        "android_gib": android_gib,
+        "matrix_gib": round(fed_size * ss / GIB, 1),
+        "gesamt_gib": round(total_gib, 1),
+        "userdata": {"dev": ud["dev"], "start": ud["start"], "size": new_ud, "bytes": new_ud * ss},
+        "fedora": {"dev": f"{dev_base}{n}", "start": fed_start, "size": fed_size, "bytes": fed_size * ss},
+        "sector": ss,
+    }
+    return "\n".join(lines) + "\n", info
+
+
+def as_fresh(dump_text):
+    """DRY RUN on a Duo that already has Matrix: the table as it was before the installation — «fedora» goes
+    away, userdata reaches to the end again (that is how the owner's table looked before 31.10.). For calculation only."""
+    head, parts = parse_dump(dump_text)
+    if not parts or parts[-1]["name"] != "fedora":
+        return dump_text
+    last = int(head["last-lba"])
+    out = []
+    for line in dump_text.splitlines():
+        if 'name="fedora"' in line:
+            continue
+        if 'name="userdata"' in line:
+            ud = next(p for p in parts if p["name"] == "userdata")
+            line = re.sub(r"size=\s*\d+", f"size={last + 1 - ud['start']:>12}", line)
+        out.append(line)
+    return "\n".join(out) + "\n"
+
+
+def same_before(old_text, new_text):
+    """The partitions BEFORE userdata are identical line by line in both tables (gpt comparison, 31.10.)."""
+    _, a = parse_dump(old_text)
+    _, b = parse_dump(new_text)
+    return [p["line"] for p in a[:-1]] == [p["line"] for p in b[: len(a) - 1]] and b[len(a) - 1]["start"] == a[-1]["start"]
+
+
+# ---------------------------------------------------------------- state
+
+STATE = {"phase": "start", "meldung": "", "schritte": [], "inventar": None, "plan": None, "sicherung": None,
+         "trocken": os.path.exists(TROCKEN)}
+LOCK = threading.Lock()
+PLANS = {}
+
+
+def run(*cmd, check=True, **kw):
+    r = subprocess.run(list(cmd), capture_output=True, text=True, **kw)
+    if check and r.returncode != 0:
+        raise RuntimeError(f"{cmd[0]}: {r.stderr.strip()[:200]}")
+    return r.stdout
+
+
+def say(text):
+    with LOCK:
+        STATE["meldung"] = text
+    print("morpheus-helfer:", text, flush=True)
+
+
+def step(name, state):
+    with LOCK:
+        for s in STATE["schritte"]:
+            if s["name"] == name:
+                s["stand"] = state
+                return
+        STATE["schritte"].append({"name": name, "stand": state})
+
+
+def inventory():
+    model = open("/proc/device-tree/model").read().strip("\0") if os.path.exists("/proc/device-tree/model") else "?"
+    size = int(run("blockdev", "--getsize64", DISK).strip())
+    dump = run("sfdisk", "-d", DISK)
+    _, parts = parse_dump(dump)
+    serial = open("/sys/devices/soc0/serial_number").read().strip() if os.path.exists("/sys/devices/soc0/serial_number") else ""
+    slot = ""
+    for w in open("/proc/cmdline").read().split():
+        if w.startswith("androidboot.slot_suffix="):
+            slot = w.split("=", 1)[1].lstrip("_")
+    ud = next((p for p in parts if p["name"] == "userdata"), None)
+    # Matrix already there -> MATRIX RECOVERY (06.11.2026): driven from the laptop, the Duo shows progress and asks.
+    matrix_da = any(p["name"] == "fedora" for p in parts)
+    return {"modell": model, "speicher_gib": round(size / GIB, 1), "seriennummer": serial, "slot": slot,
+            "partitionen": [p["name"] for p in parts], "android_gib": round(ud["size"] * 4096 / GIB, 1) if ud else 0,
+            "matrix_da": matrix_da, "dump": dump}
+
+
+def wait_laptop(word, timeout=7200):
+    """Report the need and wait until the laptop writes «<word> fertig …» or «<word> fehler …»."""
+    os.makedirs(RUN, exist_ok=True)
+    laptop = os.path.join(RUN, "laptop")
+    if os.path.exists(laptop):
+        os.remove(laptop)
+    with open(os.path.join(RUN, "bedarf"), "w") as f:
+        f.write(word + "\n")
+    t0 = time.time()
+    while time.time() - t0 < timeout:
+        try:
+            last = open(laptop).read().strip().splitlines()[-1]
+        except (OSError, IndexError):
+            last = ""
+        if last:
+            with LOCK:
+                STATE["laptop"] = last
+            if last.startswith(word.split()[0] + " fertig"):
+                os.remove(os.path.join(RUN, "bedarf"))
+                return last
+            if last.startswith(word.split()[0] + " fehler"):
+                os.remove(os.path.join(RUN, "bedarf"))
+                raise RuntimeError("Laptop: " + last)
+        time.sleep(1)
+    raise RuntimeError("Der Laptop liefert nicht (Kabel? Morpheus auf dem Laptop offen?)")
+
+
+def guard(name, dev, size_bytes):
+    """Name -> device -> size: only exactly what the plan says (protection against any mistake)."""
+    real = os.path.realpath(f"/dev/disk/by-partlabel/{name}")
+    if real != dev:
+        raise RuntimeError(f"ABBRUCH: {name} zeigt auf {real} statt {dev}")
+    got = int(run("blockdev", "--getsize64", dev).strip())
+    if got != size_bytes:
+        raise RuntimeError(f"ABBRUCH: {name} hat {got} statt {size_bytes} Byte")
+    if not dev.startswith(DISK):
+        raise RuntimeError(f"ABBRUCH: {dev} liegt nicht auf {DISK}")
+
+
+def write(desc, *cmd, **kw):
+    """A writing command — in a dry run only described."""
+    if STATE["trocken"]:
+        say(f"Trockenlauf: würde {desc} ({' '.join(cmd)[:120]})")
+        time.sleep(1.5)
+        return ""
+    say(desc)
+    return run(*cmd, **kw)
+
+
+def read_or(path, default):
+    try:
+        return open(path).read().strip() or default
+    except OSError:
+        return default
+
+
+def carry_language(upper):
+    """The live system's language (set by the laptop) for the installed system: /etc/matrix, locale, console."""
+    chain = read_or("/etc/matrix/languages", "de-CH,en-GB")
+    kbd = read_or("/etc/matrix/keyboard", "ch")
+    files = {
+        "etc/matrix/languages": chain,
+        "etc/matrix/keyboard": kbd,
+        "etc/locale.conf": "LANG=" + ("en_GB.UTF-8" if chain.startswith("en") else "de_CH.UTF-8"),
+        "etc/vconsole.conf": "KEYMAP=" + ("uk" if kbd == "gb" else "ch"),
+    }
+    for rel, text in files.items():
+        path = os.path.join(upper, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(text + "\n")
+
+
+def do_backup(yes):
+    with LOCK:
+        STATE["sicherung"] = "läuft" if yes else "übersprungen"
+    if not yes:
+        return
+    try:
+        step("Vollsicherung auf den Laptop", "läuft")
+        line = wait_laptop("sicherung")
+        step("Vollsicherung auf den Laptop", "fertig")
+        with LOCK:
+            STATE["sicherung"] = line
+    except Exception as e:
+        step("Vollsicherung auf den Laptop", "fehler")
+        with LOCK:
+            STATE["sicherung"] = f"fehler: {e}"
+        say(str(e))
+
+
+def do_install(pid):
+    new_dump, info = PLANS[pid]
+    old_dump = STATE["inventar"]["dump"]
+    try:
+        with LOCK:
+            STATE["phase"] = "installiert"
+        os.makedirs(RUN, exist_ok=True)
+        open(os.path.join(RUN, "gpt-vorher.sfdisk"), "w").write(old_dump)
+        open(os.path.join(RUN, "gpt-neu.sfdisk"), "w").write(new_dump)
+        if not same_before(old_dump, new_dump):
+            raise RuntimeError("ABBRUCH: der Plan würde Android-Partitionen verschieben")
+        # 1) Table
+        step("Speicher aufteilen", "läuft")
+        if not STATE["trocken"] and run("sfdisk", "-d", DISK) != old_dump:
+            raise RuntimeError("ABBRUCH: die Tabelle hat sich seit dem Plan geändert")
+        write("Neue Partitionstabelle schreiben", "sfdisk", "--no-reread", DISK, input=new_dump)
+        write("Kernel liest die Tabelle neu", "partx", "-u", DISK, check=False)
+        write("Neue Partition bekannt machen", "partx", "-a", DISK, check=False)
+        if not STATE["trocken"]:
+            time.sleep(2)
+            if not same_before(old_dump, run("sfdisk", "-d", DISK)):
+                raise RuntimeError("ABBRUCH: Android-Partitionen nach dem Schreiben verändert")
+        step("Speicher aufteilen", "fertig")
+        # 2) Reset Android (as on 31.10.: zero metadata, misc, userdata)
+        step("Android zurücksetzen", "läuft")
+        _, parts = parse_dump(old_dump)
+        sizes = {p["name"]: (p["dev"], p["size"] * info["sector"]) for p in parts}
+        for name in ("metadata", "misc"):
+            dev, size = sizes[name]
+            if not STATE["trocken"]:
+                guard(name, dev, size)
+            write(f"{name} leeren", "dd", "if=/dev/zero", f"of={dev}", "bs=1M", f"count={size // MIB}", "oflag=direct", "conv=fsync", "status=none")
+        ud = info["userdata"]
+        if not STATE["trocken"]:
+            guard("userdata", ud["dev"], ud["bytes"])
+        write("Android-Daten leeren (dauert einige Minuten)", "dd", "if=/dev/zero", f"of={ud['dev']}", "bs=4M",
+              f"count={ud['bytes'] // (4 * MIB)}", "oflag=direct", "conv=fsync", "status=none")
+        step("Android zurücksetzen", "fertig")
+        # 3) Matrix partition
+        step("Matrix-Partition einrichten", "läuft")
+        fd = info["fedora"]
+        if not STATE["trocken"]:
+            guard("fedora", fd["dev"], fd["bytes"])
+        write("Dateisystem anlegen", "mkfs.ext4", "-q", "-F", "-L", "duo-fedora", "-O", "^orphan_file,^metadata_csum_seed", fd["dev"])
+        mnt = "/mnt/morpheus"
+        os.makedirs(mnt, exist_ok=True)
+        write("Partition einhängen", "mount", "-t", "ext4", "-o", "rw,noatime,data=ordered", fd["dev"], mnt)
+        if not STATE["trocken"]:
+            for d in ("system", "overlay/upper", "overlay/work"):
+                os.makedirs(os.path.join(mnt, d), exist_ok=True)
+            # Language & keyboard, as chosen on the laptop: into the installed system (layer above the image).
+            carry_language(os.path.join(mnt, "overlay/upper"))
+            # The clock (stranger test 06.11.2026): the Duo has no running hardware clock; without Wi-Fi Matrix started with
+            # the date of the image build (March). At boot systemd never sets the clock before the time of this file — the
+            # live clock was set by the laptop. If Wi-Fi is there, network time takes over.
+            clock = os.path.join(mnt, "overlay/upper/var/lib/systemd/timesync/clock")
+            os.makedirs(os.path.dirname(clock), exist_ok=True)
+            open(clock, "a").close()
+            os.utime(clock, None)
+        else:
+            say("Trockenlauf: würde Sprache und Tastatur übernehmen (" + read_or("/etc/matrix/languages", "de-CH") + ", " + read_or("/etc/matrix/keyboard", "ch") + ")")
+        step("Matrix-Partition einrichten", "fertig")
+        # 4) Image from the laptop
+        step("Matrix übertragen", "läuft")
+        target = "/dev/null" if STATE["trocken"] else os.path.join(mnt, "system/A.sqfs.teil")
+        line = wait_laptop(f"abbild {target}")
+        sha_laptop = line.split()[-1]
+        if not STATE["trocken"]:
+            sha_here = run("sha256sum", target).split()[0]
+            if sha_here != sha_laptop:
+                raise RuntimeError("ABBRUCH: das übertragene Abbild ist beschädigt (Prüfsumme)")
+            os.rename(target, os.path.join(mnt, "system/A.sqfs"))
+            open(os.path.join(mnt, "system/current"), "w").write("A\n")
+            open(os.path.join(mnt, "system/tries"), "w").write("0\n")
+        step("Matrix übertragen", "fertig")
+        # 5) Completion
+        step("Prüfen", "läuft")
+        write("Daten sichern", "sync")
+        write("Partition aushängen", "umount", mnt)
+        if not STATE["trocken"]:
+            out = subprocess.run(["e2fsck", "-n", fd["dev"]], capture_output=True, text=True)
+            if out.returncode not in (0, 1):
+                raise RuntimeError("Dateisystem-Prüfung meldet Fehler")
+        step("Prüfen", "fertig")
+        with LOCK:
+            STATE["phase"] = "fertig"
+        open(os.path.join(RUN, "fertig"), "w").write("ok\n")  # the laptop supplier stops
+        say("Matrix ist installiert" + (" (Trockenlauf: nichts geschrieben)" if STATE["trocken"] else ""))
+    except Exception as e:
+        with LOCK:
+            STATE["phase"] = "fehler"
+            for s in STATE["schritte"]:
+                if s["stand"] == "läuft":
+                    s["stand"] = "fehler"
+        say(str(e))
+
+
+def handle(req):
+    tu = req.get("tu")
+    if tu == "stand":
+        with LOCK:
+            st = dict(STATE)
+            inv = st.get("inventar")
+            if inv:
+                st["inventar"] = {k: v for k, v in inv.items() if k != "dump"}
+        st["frage"] = read_or(os.path.join(RUN, "frage"), "")
+        try:
+            st["recovery"] = open(os.path.join(RUN, "recovery")).read().strip().splitlines()[-6:]
+        except OSError:
+            st["recovery"] = []
+        return st
+    if tu == "sicherung":
+        threading.Thread(target=do_backup, args=(bool(req.get("ja")),), daemon=True).start()
+        return {"ok": True}
+    if tu == "plan":
+        try:
+            dump = STATE["inventar"]["dump"]
+            if STATE["trocken"]:
+                dump = as_fresh(dump)  # dry run: calculate as for a new device (nothing is written)
+            new, info = plan(dump, int(req.get("android_gib", 32)))
+        except (ValueError, KeyError, TypeError) as e:
+            return {"ok": False, "grund": str(e)}
+        pid = str(len(PLANS) + 1)
+        PLANS[pid] = (new, info)
+        with LOCK:
+            STATE["plan"] = dict(info, id=pid)
+        return {"ok": True, "plan": dict(info, id=pid)}
+    if tu == "installieren":
+        if req.get("bestaetigt") != CONFIRM or req.get("plan") not in PLANS:
+            return {"ok": False, "grund": "nicht bestätigt"}
+        if STATE["phase"] not in ("start", "fehler"):
+            return {"ok": False, "grund": "läuft schon"}
+        threading.Thread(target=do_install, args=(req["plan"],), daemon=True).start()
+        return {"ok": True}
+    if tu == "antwort":
+        # The recovery's question (morpheus-recovery frage) — yes or no from the Duo screen.
+        if not os.path.exists(os.path.join(RUN, "frage")):
+            return {"ok": False, "grund": "keine Frage offen"}
+        with open(os.path.join(RUN, "antwort"), "w") as f:
+            f.write("ja\n" if req.get("ja") else "nein\n")
+        return {"ok": True}
+    if tu == "neustart":
+        subprocess.Popen(["systemctl", "reboot"])
+        return {"ok": True}
+    return {"ok": False, "grund": "unbekannt"}
+
+
+def serve():
+    if not os.path.exists(LIVE):
+        print("morpheus-helfer: kein Live-System — Ende", flush=True)
+        return
+    os.makedirs(RUN, exist_ok=True)
+    try:
+        STATE["inventar"] = inventory()
+        if STATE["inventar"]["matrix_da"]:
+            STATE["phase"] = "recovery"
+        say(f"bereit: {STATE['inventar']['modell']}, {STATE['inventar']['speicher_gib']} GB" + (" — TROCKENLAUF" if STATE["trocken"] else ""))
+    except Exception as e:
+        STATE["phase"] = "fehler"
+        say(f"Gerät nicht lesbar: {e}")
+    if os.path.exists(SOCK):
+        os.remove(SOCK)
+    srv = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    srv.bind(SOCK)
+    import grp
+    try:
+        os.chown(SOCK, 0, grp.getgrnam("greetd").gr_gid)
+    except KeyError:
+        pass
+    os.chmod(SOCK, 0o660)
+    srv.listen(4)
+    while True:
+        c, _ = srv.accept()
+        with c:
+            data = b""
+            while not data.endswith(b"\n") and len(data) < 65536:
+                chunk = c.recv(4096)
+                if not chunk:
+                    break
+                data += chunk
+            try:
+                ans = handle(json.loads(data.decode() or "{}"))
+            except Exception as e:
+                ans = {"ok": False, "grund": str(e)}
+            c.sendall((json.dumps(ans, ensure_ascii=False) + "\n").encode())
+
+
+def selftest():
+    """The calculation against the owner's real table of 31.10.: old + 32 GB -> exactly the new one."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    old = open(sys.argv[2]).read()
+    want = open(sys.argv[3]).read()
+    new, info = plan(old, 32)
+    _, a = parse_dump(new)
+    _, b = parse_dump(want)
+    got = [(p["name"], p["start"], p["size"]) for p in a]
+    exp = [(p["name"], p["start"], p["size"]) for p in b]
+    assert got == exp, (got, exp)
+    assert same_before(old, new)
+    try:
+        plan(want, 32)
+        raise AssertionError("schon installiert wurde nicht erkannt")
+    except ValueError:
+        pass
+    for bad in (4, 100):
+        try:
+            plan(old, bad)
+            raise AssertionError(f"{bad} GB wurde angenommen")
+        except ValueError:
+            pass
+    assert parse_dump(as_fresh(want))[1][-1]["size"] == parse_dump(old)[1][-1]["size"], "as_fresh"
+    print("selbsttest ok:", info["android_gib"], "GB Android,", info["matrix_gib"], "GB Matrix")
+
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--selbsttest":
+        selftest()
+    else:
+        serve()

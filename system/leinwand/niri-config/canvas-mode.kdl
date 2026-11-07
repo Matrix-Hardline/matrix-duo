@@ -1,0 +1,4 @@
+// AUTO (canvas-mode) — Klassisch: neue Fenster oeffnen frei
+window-rule {
+    open-floating true
+}

@@ -1,0 +1,11 @@
+[Unit]
+Description=duo: Rauschen am Anmeldebildschirm heilen (FIFO-Unterlauf -> greetd neu)
+After=greetd.service
+
+[Service]
+ExecStart=/usr/local/sbin/duo-bildwache.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

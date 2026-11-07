@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Matrix Tube
+Comment=YouTube ohne Werbung, mit SponsorBlock — fürs Duo gebaut
+Exec=matrix-tube
+Icon=matrix-player
+Terminal=false
+Categories=AudioVideo;Video;Player;
+StartupWMClass=matrix-tube

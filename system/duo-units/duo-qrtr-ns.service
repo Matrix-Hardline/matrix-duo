@@ -1,0 +1,9 @@
+[Unit]
+Description=duo: QRTR name service (userspace, downstream kernel)
+
+[Service]
+ExecStart=/usr/local/bin/qrtr-ns -f
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

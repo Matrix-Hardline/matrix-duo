@@ -1,0 +1,5 @@
+// Matrix — user base config: ONE canonical chain for every device.
+// window-decor.kdl = the die frühere Wahl base without prefer-no-csd, so
+// Matrix apps draw their own traffic-light titlebars.
+include "window-decor.kdl"
+include optional=true "local.kdl"

@@ -1,0 +1,92 @@
+diff --git a/hexagonrpcd/apps_mem.c b/hexagonrpcd/apps_mem.c
+index 1477f0b..b5adf61 100644
+--- a/hexagonrpcd/apps_mem.c
++++ b/hexagonrpcd/apps_mem.c
+@@ -24,7 +24,11 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <string.h>
++#ifdef HEXAGONRPC_DOWNSTREAM
++#include "fastrpc_downstream.h"
++#else
+ #include <misc/fastrpc.h>
++#endif
+ #include <sys/ioctl.h>
+ 
+ #include "apps_mem.h"
+diff --git a/hexagonrpcd/rpcd.c b/hexagonrpcd/rpcd.c
+index 600237b..4119665 100644
+--- a/hexagonrpcd/rpcd.c
++++ b/hexagonrpcd/rpcd.c
+@@ -25,7 +25,11 @@
+ #include <libhexagonrpc/handle.h>
+ #include <libhexagonrpc/interface/remotectl.h>
+ #include <libhexagonrpc/session.h>
++#ifdef HEXAGONRPC_DOWNSTREAM
++#include "fastrpc_downstream.h"
++#else
+ #include <misc/fastrpc.h>
++#endif
+ #include <unistd.h>
+ #include <signal.h>
+ #include <stdbool.h>
+diff --git a/libhexagonrpc/hexagonrpc.c b/libhexagonrpc/hexagonrpc.c
+index c4665f8..7ba58b7 100644
+--- a/libhexagonrpc/hexagonrpc.c
++++ b/libhexagonrpc/hexagonrpc.c
+@@ -26,7 +26,11 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#ifdef HEXAGONRPC_DOWNSTREAM
++#include "fastrpc_downstream.h"
++#else
+ #include <misc/fastrpc.h>
++#endif
+ #include <sys/ioctl.h>
+ 
+ #include <libhexagonrpc/hexagonrpc.h>
+diff --git a/libhexagonrpc/meson.build b/libhexagonrpc/meson.build
+index 6811853..d406d33 100644
+--- a/libhexagonrpc/meson.build
++++ b/libhexagonrpc/meson.build
+@@ -4,6 +4,7 @@ libhexagonrpc = shared_library('hexagonrpc',
+   'hexagonrpc.c',
+   'interface/remotectl.c',
+   'session.c',
++  'fastrpc_downstream.c',
+   c_args : cflags,
+   include_directories : include,
+   soversion : api_version,
+diff --git a/meson.build b/meson.build
+index 407a2b1..24d100d 100644
+--- a/meson.build
++++ b/meson.build
+@@ -8,6 +8,10 @@ client_target = get_option('libexecdir') / 'hexagonrpc'
+ 
+ cflags = ['-Wall', '-Wextra', '-Wpedantic', '-Wno-unused-parameter']
+ 
++if get_option('downstream')
++  cflags += '-DHEXAGONRPC_DOWNSTREAM'
++endif
++
+ if get_option('hexagonrpcd_verbose')
+   cflags += '-DHEXAGONRPC_VERBOSE'
+ endif
+@@ -19,4 +23,6 @@ subdir('chrecd')
+ subdir('data')
+ subdir('tools')
+ 
+-subdir('tests')
++if not get_option('downstream')
++  subdir('tests')
++endif
+diff --git a/meson.options b/meson.options
+index 503eb7f..cd644dc 100644
+--- a/meson.options
++++ b/meson.options
+@@ -1,2 +1,4 @@
+ option('hexagonrpcd_verbose', type : 'boolean', value : false,
+   description : 'Compile hexagonrpcd with extra logging for each remote method invocation')
++option('downstream', type : 'boolean', value : false,
++  description : 'Build against the Qualcomm downstream adsprpc driver (msm-4.14) instead of the mainline fastrpc UAPI')

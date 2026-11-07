@@ -1,0 +1,6 @@
+#!/bin/sh
+# duo-in-den-bootloader (Morpheus, 06.11.2026): reboot the Duo into the bootloader — so Morpheus on the laptop
+# can reach Matrix Recovery (restore, reinstall). The logged-in person may run it without a password
+# (/etc/sudoers.d/matrix-begleiter); it does nothing else.
+sync
+exec systemctl reboot --reboot-argument=bootloader

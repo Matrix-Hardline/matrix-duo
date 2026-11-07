@@ -1,0 +1,13 @@
+[Unit]
+Description=Surface Duo Touch im Heatmap-Modus (Multitouch, duoheat)
+Conflicts=duotouch.service
+After=systemd-udev-settle.service
+
+[Service]
+ExecStart=/usr/local/bin/duoheat /dev/hidraw0
+# Fallback: if duoheat fails, the single-finger driver takes over
+ExecStopPost=/bin/sh -c '[ "$SERVICE_RESULT" = success ] || systemctl start --no-block duotouch.service'
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

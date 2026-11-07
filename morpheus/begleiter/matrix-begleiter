@@ -1,0 +1,206 @@
+#!/usr/bin/python3
+"""matrix-begleiter (Morpheus, 06.11.2026): the Duo side of Morpheus on the laptop («the iTunes of Matrix»).
+
+Runs as the signed-in person — the laptop calls it over ssh with its paired key (which is only valid over the
+USB cable, see matrix-kopplung). Every answer is one JSON line (exception: file streams).
+
+  matrix-begleiter info                 -> device, account, storage, battery, system state
+  matrix-begleiter liste <pfad>         -> folder contents (path relative to the home folder; never outside)
+  matrix-begleiter vorschau             -> create/refresh thumbnails of the photos (Bilder/…), list
+  matrix-begleiter vorschau-tar         -> all thumbnails as tar on stdout
+  matrix-begleiter lesen <pfad>         -> file on stdout
+  matrix-begleiter schreiben <pfad>     <- file from stdin (never overwriting: «name (2).ext»)
+  matrix-begleiter paket <pfad>         -> folder as tar on stdout (for copying to the laptop)
+  matrix-begleiter auspacken <ordner>   <- tar from stdin, into this folder (never overwriting)
+  matrix-begleiter bootloader           -> reboot the Duo into the bootloader (for recovery / restore)
+  matrix-begleiter sichern              -> Matrix backup while running (tar.zst on stdout)
+"""
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+
+HOME = os.path.realpath(os.path.expanduser("~"))
+CACHE = os.path.join(HOME, ".cache/morpheus-vorschau")
+FOTOS = ["Bilder"]
+BILD = (".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp")
+GROSS = 320
+
+
+def antwort(obj):
+    print(json.dumps(obj, ensure_ascii=False))
+
+
+def im_heim(rel):
+    """A path inside the home folder — everything else is refused (also via links)."""
+    p = os.path.realpath(os.path.join(HOME, rel.lstrip("/")))
+    if p != HOME and not p.startswith(HOME + os.sep):
+        raise SystemExit(antwort({"ok": False, "grund": "ausserhalb des Heimordners"}) or 2)
+    return p
+
+
+def lies(path, default=""):
+    try:
+        return open(path).read().strip()
+    except OSError:
+        return default
+
+
+def info():
+    st = os.statvfs(HOME)
+    total, frei = st.f_blocks * st.f_frsize, st.f_bavail * st.f_frsize
+    sq = "/duo-disk/system/A.sqfs"
+    os_rel = dict(l.split("=", 1) for l in lies("/etc/os-release").splitlines() if "=" in l)
+    up = float(lies("/proc/uptime", "0").split()[0] or 0)
+    antwort({
+        "ok": True,
+        "modell": lies("/proc/device-tree/model").strip("\0") or "Surface Duo",
+        "seriennummer": lies("/sys/devices/soc0/serial_number"),
+        "konto": os.environ.get("USER") or os.path.basename(HOME),
+        "name": lies("/etc/hostname", "duo"),
+        "speicher_gib": round(total / 2**30, 1),
+        "frei_gib": round(frei / 2**30, 1),
+        "akku": int(lies("/sys/class/power_supply/battery/capacity", "-1") or -1),
+        "laedt": lies("/sys/class/power_supply/battery/status") in ("Charging", "Full"),
+        "system": time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(sq))) if os.path.exists(sq) else "",
+        "fedora": os_rel.get("PRETTY_NAME", "").strip('"'),
+        "kernel": os.uname().release,
+        "seit_h": round(up / 3600, 1),
+        "sprache": lies(os.path.join(HOME, ".config/matrix/languages")) or lies("/etc/matrix/languages", "de-CH"),
+    })
+
+
+def liste(rel):
+    p = im_heim(rel)
+    out = []
+    try:
+        names = sorted(os.listdir(p), key=lambda n: (not os.path.isdir(os.path.join(p, n)), n.lower()))
+    except OSError as e:
+        return antwort({"ok": False, "grund": str(e)})
+    for n in names:
+        if n.startswith("."):
+            continue
+        q = os.path.join(p, n)
+        try:
+            s = os.stat(q)
+        except OSError:
+            continue
+        out.append({"name": n, "ordner": os.path.isdir(q), "groesse": s.st_size, "zeit": int(s.st_mtime)})
+    antwort({"ok": True, "pfad": os.path.relpath(p, HOME) if p != HOME else "", "eintraege": out})
+
+
+def fotos():
+    for top in FOTOS:
+        base = os.path.join(HOME, top)
+        for dp, dns, fns in os.walk(base):
+            dns[:] = [d for d in dns if not d.startswith(".")]
+            for f in fns:
+                if f.lower().endswith(BILD):
+                    yield os.path.join(dp, f)
+
+
+def vorschau():
+    """Vorschaubilder (≤ 320 px, JPEG) in ~/.cache/morpheus-vorschau, Name = Hash von Pfad + Zeit."""
+    os.makedirs(CACHE, exist_ok=True)
+    from PIL import Image, ImageOps
+    items, keep = [], set()
+    for p in fotos():
+        s = os.stat(p)
+        key = hashlib.sha1(f"{p}:{int(s.st_mtime)}:{s.st_size}".encode()).hexdigest()[:16] + ".jpg"
+        keep.add(key)
+        t = os.path.join(CACHE, key)
+        if not os.path.exists(t):
+            try:
+                with Image.open(p) as im:
+                    im = ImageOps.exif_transpose(im)
+                    im.thumbnail((GROSS, GROSS))
+                    im.convert("RGB").save(t, "JPEG", quality=82)
+            except Exception:
+                continue
+        items.append({"pfad": os.path.relpath(p, HOME), "vorschau": key, "zeit": int(s.st_mtime), "groesse": s.st_size})
+    for old in os.listdir(CACHE):
+        if old not in keep:
+            os.remove(os.path.join(CACHE, old))
+    items.sort(key=lambda i: -i["zeit"])
+    antwort({"ok": True, "fotos": items})
+
+
+def vorschau_tar():
+    os.makedirs(CACHE, exist_ok=True)
+    os.execvp("tar", ["tar", "-cf", "-", "-C", CACHE, "."])
+
+
+def lesen(rel):
+    p = im_heim(rel)
+    with open(p, "rb") as f:
+        while True:
+            chunk = f.read(1 << 20)
+            if not chunk:
+                break
+            sys.stdout.buffer.write(chunk)
+
+
+def schreiben(rel):
+    p = im_heim(rel)
+    base, ext = os.path.splitext(p)
+    n = 2
+    while os.path.exists(p):
+        p = f"{base} ({n}){ext}"
+        n += 1
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    tmp = p + ".morpheus-teil"
+    with open(tmp, "wb") as f:
+        while True:
+            chunk = sys.stdin.buffer.read(1 << 20)
+            if not chunk:
+                break
+            f.write(chunk)
+    os.rename(tmp, p)
+    antwort({"ok": True, "pfad": os.path.relpath(p, HOME)})
+
+
+def paket(rel):
+    p = im_heim(rel)
+    os.execvp("tar", ["tar", "-cf", "-", "-C", os.path.dirname(p), os.path.basename(p)])
+
+
+def auspacken(rel):
+    p = im_heim(rel)
+    os.makedirs(p, exist_ok=True)
+    # --skip-old-files: whatever is already there stays; nothing gets overwritten.
+    r = subprocess.run(["tar", "-xf", "-", "--skip-old-files", "--no-same-owner", "-C", p], stdin=sys.stdin.buffer)
+    antwort({"ok": r.returncode == 0})
+
+
+def main():
+    a = sys.argv[1:]
+    cmd = a[0] if a else ""
+    if cmd == "info":
+        info()
+    elif cmd == "liste":
+        liste(a[1] if len(a) > 1 else "")
+    elif cmd == "vorschau":
+        vorschau()
+    elif cmd == "vorschau-tar":
+        vorschau_tar()
+    elif cmd == "lesen":
+        lesen(a[1])
+    elif cmd == "schreiben":
+        schreiben(a[1])
+    elif cmd == "paket":
+        paket(a[1])
+    elif cmd == "auspacken":
+        auspacken(a[1] if len(a) > 1 else "")
+    elif cmd == "bootloader":
+        os.execvp("sudo", ["sudo", "-n", "/usr/local/bin/duo-in-den-bootloader"])
+    elif cmd == "sichern":
+        os.execvp("sudo", ["sudo", "-n", "/usr/local/bin/morpheus-recovery", "--wurzel", "/duo-disk", "sichern"])
+    else:
+        print(__doc__, file=sys.stderr)
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()

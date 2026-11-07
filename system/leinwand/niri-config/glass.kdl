@@ -1,0 +1,150 @@
+// Frost strength: 1 Kawase pass keeps the backdrop readable — motion
+// behind the glass stays visible as displacement (user wish 22.07).
+blur {
+    passes 1
+    offset 2
+}
+
+// R106/R108: liquid glass rules — the compositor derives body, shadow
+// and rim from ONE distance field per surface. All knobs live-reload.
+// This file is the toggle: Einstellungen -> Erscheinungsbild rewrites
+// it (rules present = glass on, empty file = off).
+layer-rule {
+    match namespace="^matrix-dock$"
+    geometry-corner-radius 19
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 40
+        glass-inset-y 40
+        glass-height 120
+        glass-band 16
+        glass-bend 20
+        glass-scrim 0.35
+        glass-shadow 0
+        glass-shadow-spread 14
+    }
+}
+
+layer-rule {
+    match namespace="^matrix-bar$"
+    geometry-corner-radius 16
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 10
+        glass-inset-y 0
+        glass-height 44
+        glass-anchor-top true
+        glass-band 12
+        glass-bend 14
+        glass-scrim 0.35
+        glass-shadow 0
+        glass-shadow-spread 12
+    }
+}
+
+// R125: every popup CARD (Zentrale footer, gallery, context menus) is
+// its own exactly-sized window — inset 0 makes the whole surface the
+// glass body. union 0: cards never melt into bar or dock.
+layer-rule {
+    match namespace="^matrix-card$"
+    geometry-corner-radius 22
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 0
+        glass-inset-y 0
+        glass-band 14
+        glass-bend 16
+        glass-scrim 0.35
+        glass-shadow 0
+        glass-shadow-spread 12
+        glass-union 0
+    }
+}
+
+// R127: island TILES carry a transparent gutter on both sides
+// (the minus badges float there) — the body insets to the tile.
+layer-rule {
+    match namespace="^matrix-tile$"
+    geometry-corner-radius 22
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 30
+        glass-inset-y 0
+        glass-band 14
+        glass-bend 16
+        glass-scrim 0.35
+        glass-shadow 0
+        glass-shadow-spread 12
+        glass-union 0
+    }
+}
+
+// R174: a shelf CHIP — one dock tile or widget, each its own layer
+// surface so the compositor can lay real glass under every single
+// one. Unlike the control-centre tile it carries no gutter: nothing
+// floats outside its body, so the glass fills the whole surface
+// (glass-inset-x 0). The radius matches mk::radius::LARGE.
+layer-rule {
+    match namespace="^matrix-chip$"
+    geometry-corner-radius 16
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 0
+        glass-inset-y 0
+        glass-band 14
+        glass-bend 16
+        glass-scrim 0.35
+        glass-shadow 0
+        glass-shadow-spread 12
+        glass-union 0
+    }
+}
+
+// R192: the Hardtext bodies in space. Every element of the page is
+// its own surface — heading, paragraph, quote, module. Its own
+// rule instead of matrix-tile, because the tile rule brings a gutter for the
+// control centre (glass-inset-x 30), and exactly that is what ailed the
+// first dock tiles in R174.
+//
+// Larger radius and more spread than the chip: a body in
+// space stands free, not in a row — it may look softer.
+layer-rule {
+    match namespace="^matrix-hardtext$"
+    geometry-corner-radius 28
+    background-effect {
+        xray false
+        blur true
+        glass true
+        glass-inset-x 0
+        glass-inset-y 0
+        glass-band 20
+        glass-bend 24
+        glass-scrim 0.42
+        glass-shadow 0
+        glass-shadow-spread 22
+        glass-union 0
+        // R195: the pane follows the space's wheel focus. Must
+        // mirror the content formula in raum.rs (focus 0.85+0.30*phase,
+        // hull measured at 1.15) -> k = 0.30/1.15.
+        glass-focus 0.2609
+        // Padding that does not scale along: spacing::L = 16 per side.
+        glass-focus-keep 32
+        // R203/R204: the focus lives up by the title, at 30 % of the
+        // height (mirror of FOKUS_HOEHE in raum.rs) — at the bottom the
+        // text dives dark behind the dock, at the top it leaves the
+        // focus gently.
+        glass-focus-center 0.30
+        glass-focus-scrim-above 0.18
+        glass-focus-scrim-below 0.45
+    }
+}

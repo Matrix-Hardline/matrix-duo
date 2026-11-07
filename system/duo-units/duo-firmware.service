@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: stage firmware from the Android partitions into /lib/firmware
+After=duo-android-map.service
+Wants=duo-android-map.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/duo-firmware-stage.sh
+
+[Install]
+WantedBy=multi-user.target

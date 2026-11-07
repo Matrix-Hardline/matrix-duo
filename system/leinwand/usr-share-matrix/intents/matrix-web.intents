@@ -1,0 +1,9 @@
+{
+  "app_id": "matrix-web",
+  "intents": [
+    { "id": "web.search", "title": "Im Web suchen",
+      "exec": ["xdg-open", "https://duckduckgo.com/?q={query}"],
+      "accepts_query": true,
+      "keywords": ["web", "suche", "internet"] }
+  ]
+}

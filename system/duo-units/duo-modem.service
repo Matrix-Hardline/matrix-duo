@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: boot and hold the modem subsystem (hosts the WLAN firmware); kein IPA-FW-Laden mehr (wlan.ko ohne IPA_OFFLOAD; ipa_fws fehlt -> ipa_assert/BUG)
+After=duo-pd-mapper.service duo-rmtfs.service duo-tqftpserv.service duo-firmware.service
+Requires=duo-pd-mapper.service duo-rmtfs.service duo-tqftpserv.service
+
+[Service]
+ExecStartPre=/bin/sh -c 'for s in /sys/bus/msm_subsys/devices/subsys*; do case "$(cat $s/name)" in modem|ipa_fws) echo RELATED > $s/restart_level;; esac; done'
+ExecStart=/bin/sh -c 'exec 3</dev/subsys_modem; for i in $(seq 1 30); do grep -q ONLINE /sys/bus/msm_subsys/devices/subsys0/state && break; sleep 1; done; cat /sys/bus/msm_subsys/devices/subsys0/state; exec sleep infinity'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

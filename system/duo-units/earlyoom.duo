@@ -1,0 +1,3 @@
+# Surface Duo (31.10.2026): earlyoom is only the LAST line. Before that the shell's memory guard
+# (duoSpeicher.js, alarm at < 12 % RAM + swap half full) pauses the apps and lets you choose what gets closed.
+EARLYOOM_ARGS="-m 4 -s 15 -r 60 --prefer ^(QtWebEngineProc|ollama.*|llama.*|firefox|Web.Content|Isolated.Web.Co|WebKit.*|gnome-software)$ --avoid ^(gnome-shell|gnome-session.*|gdm|gdm-.*|sshd|systemd.*|pipewire|wireplumber|Xwayland|duo.*)$ --ignore ^(fusermount3?)$"

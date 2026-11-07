@@ -1,0 +1,158 @@
+#!/usr/bin/python3
+"""matrix-kopplung (Morpheus, 06.11.2026): «Diesem Laptop vertrauen?» — wie beim iPhone.
+
+Ein Dienst in der Sitzung der angemeldeten Person (systemd --user). Er hört NUR an der USB-Adresse des Duo
+(172.16.42.1:7471) — über WLAN ist er nicht erreichbar. Eine JSON-Zeile hin, eine zurück:
+
+  {"tu": "hallo", "schluessel": "ssh-ed25519 …"}   -> Gerät, Konto, und ob dieser Laptop schon gekoppelt ist
+  {"tu": "koppeln", "laptop": "name", "schluessel": "ssh-ed25519 …"}
+        -> das Duo fragt auf seinem Bildschirm (matrix-trust). Bei «Vertrauen» kommt der Schlüssel in
+           ~/.ssh/authorized_keys — eingeschränkt: nur von 172.16.42.2 (dem Laptop am Kabel), keine Weiterleitungen,
+           markiert «morpheus:<name>». Entziehen = die Zeile löschen (Einstellungen › Verbindungen, oder von Hand).
+"""
+import json
+import os
+import socket
+import subprocess
+import threading
+import time
+
+ADRESSE = ("172.16.42.1", 7471)
+HOME = os.path.expanduser("~")
+KEYS = os.path.join(HOME, ".ssh/authorized_keys")
+MARKE = "morpheus:"
+FRAGT = threading.Lock()
+
+
+def lies(path, default=""):
+    try:
+        return open(path).read().strip()
+    except OSError:
+        return default
+
+
+def schluessel_teil(key):
+    """«ssh-ed25519 AAAA…» — Typ und Wert, ohne Kommentar."""
+    f = key.split()
+    return " ".join(f[:2]) if len(f) >= 2 and f[0].startswith(("ssh-", "ecdsa-")) else ""
+
+
+def gekoppelt(key):
+    teil = schluessel_teil(key)
+    return bool(teil) and any(teil in line for line in lies(KEYS).splitlines())
+
+
+def eintragen(key, laptop):
+    teil = schluessel_teil(key)
+    # Spaces as «_» (the tag is one word; the settings show spaces again).
+    name = "".join(c if c.isalnum() or c in "-_." else "_" if c == " " else "" for c in laptop)[:40] or "laptop"
+    # «morpheus:<name>:<tag>» — the settings show the pairing's name and tag (Paired laptops).
+    line = f'from="172.16.42.2",no-port-forwarding,no-X11-forwarding,no-agent-forwarding {teil} {MARKE}{name}:{time.strftime("%Y-%m-%d")}\n'
+    os.makedirs(os.path.dirname(KEYS), mode=0o700, exist_ok=True)
+    with open(KEYS, "a") as f:
+        f.write(line)
+    os.chmod(KEYS, 0o600)
+
+
+SITZUNG = ("WAYLAND_DISPLAY", "NIRI_SOCKET", "DISPLAY", "XDG_CURRENT_DESKTOP", "XDG_SESSION_TYPE",
+           "DBUS_SESSION_BUS_ADDRESS", "MATRIX_LANGUAGE", "LANG")
+
+
+def sitzung_env():
+    """Die Umgebung der grafischen Sitzung — erst JETZT geholt: der Dienst startet beim Anmelden (default.target)
+    oft VOR der Leinwand und kennt WAYLAND_DISPLAY dann nicht; das Vertrauensfenster öffnete sich nie
+    (Fremden-Test 06.11.2026: frisch installiertes Duo, «kein Laptop erkannt»)."""
+    env = dict(os.environ)
+    try:
+        out = subprocess.run(["systemctl", "--user", "show-environment"], capture_output=True, text=True, timeout=5).stdout
+        for line in out.splitlines():
+            k, _, v = line.partition("=")
+            if k in SITZUNG and v:
+                env[k] = v
+    except (OSError, subprocess.SubprocessError):
+        pass
+    run = env.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}"
+    env["XDG_RUNTIME_DIR"] = run
+    if not env.get("WAYLAND_DISPLAY"):
+        try:
+            socks = sorted(n for n in os.listdir(run) if n.startswith("wayland-") and not n.endswith(".lock"))
+            if socks:
+                env["WAYLAND_DISPLAY"] = socks[0]
+        except OSError:
+            pass
+    return env
+
+
+def geraet():
+    return {"modell": lies("/proc/device-tree/model").strip("\0") or "Surface Duo",
+            "seriennummer": lies("/sys/devices/soc0/serial_number"),
+            "konto": os.environ.get("USER") or os.path.basename(HOME)}
+
+
+def handle(req):
+    tu = req.get("tu")
+    key = str(req.get("schluessel", ""))
+    if tu == "hallo":
+        return dict(geraet(), ok=True, gekoppelt=gekoppelt(key))
+    if tu == "koppeln":
+        if not schluessel_teil(key):
+            return {"ok": False, "grund": "kein Schlüssel"}
+        if gekoppelt(key):
+            return dict(geraet(), ok=True, gekoppelt=True)
+        if not FRAGT.acquire(blocking=False):
+            return {"ok": False, "grund": "Das Duo fragt schon"}
+        try:
+            laptop = str(req.get("laptop", "Laptop"))[:40]
+            r = subprocess.run(["matrix-trust", "--laptop", laptop], timeout=150, env=sitzung_env())
+            if r.returncode != 0:
+                return {"ok": False, "grund": "Auf dem Duo nicht vertraut"}
+            eintragen(key, laptop)
+            return dict(geraet(), ok=True, gekoppelt=True)
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "grund": "Keine Antwort auf dem Duo"}
+        finally:
+            FRAGT.release()
+    return {"ok": False, "grund": "unbekannt"}
+
+
+def bedienen(c):
+    with c:
+        c.settimeout(170)
+        data = b""
+        while not data.endswith(b"\n") and len(data) < 16384:
+            chunk = c.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+        try:
+            ans = handle(json.loads(data.decode() or "{}"))
+        except Exception as e:
+            ans = {"ok": False, "grund": str(e)}
+        try:
+            c.sendall((json.dumps(ans, ensure_ascii=False) + "\n").encode())
+        except OSError:
+            pass
+
+
+def main():
+    while True:
+        # Only once the USB network is up (cable plugged in) — otherwise wait quietly.
+        try:
+            srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            srv.bind(ADRESSE)
+            srv.listen(4)
+        except OSError:
+            time.sleep(10)
+            continue
+        print("matrix-kopplung: bereit an", ADRESSE, flush=True)
+        while True:
+            c, peer = srv.accept()
+            if peer[0] != "172.16.42.2":
+                c.close()
+                continue
+            threading.Thread(target=bedienen, args=(c,), daemon=True).start()
+
+
+if __name__ == "__main__":
+    main()

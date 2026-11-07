@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: modem remote filesystem, READ-ONLY (never writes modemst1/2, fsg, fsc)
+After=duo-qrtr-ns.service
+Requires=duo-qrtr-ns.service
+
+[Service]
+ExecStartPre=/bin/sh -c 'for i in $(seq 1 40); do [ -e /dev/qcom_rmtfs_uio1 ] && exit 0; sleep 0.5; done; echo "no /dev/qcom_rmtfs_uio1"; exit 1'
+ExecStart=/usr/bin/rmtfs -r -P -v
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

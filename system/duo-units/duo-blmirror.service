@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: Helligkeit von Panel 0 auf Panel 1 spiegeln (GNOME regelt nur ein Backlight)
+After=duotouch.service duoheat.service
+
+[Service]
+ExecStart=/usr/local/bin/duo-blmirror
+Restart=always
+RestartSec=2
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,100 @@
+#!/usr/bin/python3
+"""matrix-erststart-helfer (Morpheus, 06.11.2026): creates the FIRST account of a new Matrix device.
+
+Runs as root, one connection = one job (systemd: matrix-erststart.socket, Accept=yes; only the group
+greetd may connect). Takes ONE line of JSON {"name", "user", "password"} and answers «ok» or «fehler: …».
+Refuses as soon as an account exists — from then on it has no effect.
+"""
+import grp
+import json
+import os
+import re
+import subprocess
+import sys
+
+GROUPS = ["wheel", "video", "input", "render", "seat", "audio"]
+# Language & keyboard (06.11.2026): the two that Matrix speaks.
+LANGS = {"de-CH": ("de-CH,en-GB", "de_CH.UTF-8"), "en-GB": ("en-GB,de-CH", "en_GB.UTF-8")}
+KEYMAPS = {"ch": "ch", "gb": "uk"}
+
+
+def answer(text):
+    sys.stdout.write(text + "\n")
+    sys.stdout.flush()
+    sys.exit(0)
+
+
+def has_person():
+    for line in open("/etc/passwd"):
+        f = line.rstrip("\n").split(":")
+        if len(f) >= 7 and f[2].isdigit() and 1000 <= int(f[2]) < 60000 and "nologin" not in f[6] and not f[6].endswith("false"):
+            return True
+    return False
+
+
+def set_language(user, lang, kbd):
+    """Device AND account in the chosen language: /etc/matrix (Matrix), locale.conf (system), vconsole (console),
+    the account (~/.config/matrix, niri input-layout.kdl)."""
+    import pwd
+    chain, locale = LANGS[lang]
+    os.makedirs("/etc/matrix", exist_ok=True)
+    for path, text in (("/etc/matrix/languages", chain), ("/etc/matrix/keyboard", kbd),
+                       ("/etc/locale.conf", f"LANG={locale}"), ("/etc/vconsole.conf", f"KEYMAP={KEYMAPS[kbd]}")):
+        with open(path, "w") as f:
+            f.write(text + "\n")
+    pw = pwd.getpwnam(user)
+    home = pw.pw_dir
+    files = {
+        ".config/matrix/languages": chain + "\n",
+        ".config/matrix/keyboard-layout": kbd + "\n",
+        ".config/niri/input-layout.kdl": f'// Matrix Ersteinrichtung: Tastatur.\ninput {{\n    keyboard {{\n        xkb {{\n            layout "{kbd}"\n        }}\n    }}\n}}\n',
+    }
+    for rel, text in files.items():
+        path = os.path.join(home, rel)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w") as f:
+            f.write(text)
+        os.chown(path, pw.pw_uid, pw.pw_gid)
+        os.chown(os.path.dirname(path), pw.pw_uid, pw.pw_gid)
+
+
+def main():
+    line = sys.stdin.readline(4096)
+    try:
+        ask = json.loads(line)
+        name, user, password = str(ask["name"]).strip(), str(ask["user"]), str(ask["password"])
+        lang = str(ask.get("sprache", "de-CH"))
+        kbd = str(ask.get("tastatur", "ch"))
+    except Exception:
+        answer("fehler: Auftrag unlesbar")
+    if has_person():
+        answer("fehler: Dieses Gerät ist schon eingerichtet")
+    if not re.fullmatch(r"[a-z][a-z0-9._-]{0,31}", user) or user in ("root", "greetd"):
+        answer("fehler: Kontoname ungültig")
+    if any(c in name for c in ":\n\r,") or len(name) > 64:
+        answer("fehler: Name enthält unerlaubte Zeichen")
+    if len(password) < 4 or "\n" in password or "\r" in password:
+        answer("fehler: Passwort ungültig")
+    if lang not in LANGS or kbd not in KEYMAPS:
+        answer("fehler: Sprache oder Tastatur unbekannt")
+    groups = []
+    for g in GROUPS:
+        try:
+            grp.getgrnam(g)
+            groups.append(g)
+        except KeyError:
+            pass
+    r = subprocess.run(["useradd", "-m", "-c", name or user, "-G", ",".join(groups), "-s", "/bin/bash", user], capture_output=True, text=True)
+    if r.returncode != 0:
+        answer("fehler: Konto nicht angelegt (" + r.stderr.strip()[:120] + ")")
+    r = subprocess.run(["chpasswd"], input=f"{user}:{password}\n", capture_output=True, text=True)
+    if r.returncode != 0:
+        subprocess.run(["userdel", "-r", user], capture_output=True)
+        answer("fehler: Passwort nicht gesetzt")
+    set_language(user, lang, kbd)
+    print(f"matrix-erststart: Konto «{user}» angelegt ({','.join(groups)}), Sprache {lang}, Tastatur {kbd}", file=sys.stderr)
+    answer("ok")
+
+
+if __name__ == "__main__":
+    main()

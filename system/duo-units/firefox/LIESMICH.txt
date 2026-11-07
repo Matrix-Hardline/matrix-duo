@@ -1,0 +1,1 @@
+Profil /home/mobile/.config/mozilla/firefox/duo (user.js + chrome/userChrome.css); Desktop-Override /usr/local/share/applications/org.mozilla.firefox.desktop mit --profile; policies.json: legacyUserProfileCustomizations

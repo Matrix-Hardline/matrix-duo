@@ -1,0 +1,8 @@
+{
+  "app_id": "matrix-terminal",
+  "intents": [
+    { "id": "terminal.new", "title": "Neues Terminal",
+      "exec": ["matrix-terminal"],
+      "keywords": ["terminal", "shell", "konsole"] }
+  ]
+}

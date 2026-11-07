@@ -1,0 +1,33 @@
+diff --git a/dsp/audio_notifier.c b/dsp/audio_notifier.c
+index 485c703..bf65521 100644
+--- a/dsp/audio_notifier.c
++++ b/dsp/audio_notifier.c
+@@ -54,6 +54,10 @@ struct service_info {
+ 	struct srcu_notifier_head       client_nb_list;
+ };
+ 
++static bool duo_no_pdr = true;
++module_param(duo_no_pdr, bool, 0444);
++MODULE_PARM_DESC(duo_no_pdr, "Surface Duo: PDR-Dienst aus, SSR-Benachrichtigung nutzen (Standard 1)");
++
+ static int audio_notifer_ssr_adsp_cb(struct notifier_block *this,
+ 				     unsigned long opcode, void *data);
+ static int audio_notifer_ssr_modem_cb(struct notifier_block *this,
+@@ -619,7 +623,16 @@ static int __init audio_notifier_init(void)
+ 
+ 	audio_notifier_subsys_init();
+ 
+-	ret = audio_pdr_register(&pdr_nb);
++	/* Surface Duo / Fedora (29.10.2026): ohne Android-pd-mapper kommt die PDR-Antwort nicht beim
++	 * Audio-Stack an, Clients haengen in der Warteliste, apr_adsp_up wird nie gerufen. Daher PDR aus,
++	 * SSR-Weg (AFTER_POWERUP) fuer alle Clients: Module laden, DANN ADSP booten. */
++	if (duo_no_pdr) {
++		pr_info("%s: duo_no_pdr=1 -> PDR aus, SSR-Benachrichtigung\n", __func__);
++		audio_notifer_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
++		ret = 0;
++	} else {
++		ret = audio_pdr_register(&pdr_nb);
++	}
+ 	if (ret < 0) {
+ 		pr_err("%s: PDR register failed, ret = %d, disable service\n",
+ 			__func__, ret);

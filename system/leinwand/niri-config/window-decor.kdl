@@ -1,0 +1,17 @@
+// die frühere Wahl base WITHOUT prefer-no-csd: Matrix apps own their
+// titlebars (close/minimize/maximize). Custom binds stay optional so
+// devices without the file still parse.
+// R116 stage 1: the base includes are Matrix-owned now
+// (/usr/share/matrix/niri, shipped by the image). They stay optional
+// so a home upgraded ahead of its image still parses — the session
+// then runs on niri defaults until the image lands.
+include optional=true "binds-custom.kdl"
+include optional=true "/usr/share/matrix/niri/base.kdl"
+include optional=true "/usr/share/matrix/niri/input.kdl"
+include optional=true "/usr/share/matrix/niri/layout.kdl"
+// misc.kdl content, minus prefer-no-csd:
+animations {}
+hotkey-overlay { skip-at-startup; }
+screenshot-path "~/Bilder/Bildschirmfotos/Bildschirmfoto %Y-%m-%d um %H.%M.%S.png"
+include optional=true "/usr/share/matrix/niri/window-rules.kdl"
+include optional=true "/etc/niri/local.kdl"

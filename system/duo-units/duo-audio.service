@@ -1,0 +1,14 @@
+[Unit]
+Description=duo: boot ADSP and load the audio techpack chain (sound card), then Startklang – vor GDM
+After=duo-firmware.service duo-modem.service
+Wants=duo-firmware.service
+Before=gdm.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/duo-audio-up.sh
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target

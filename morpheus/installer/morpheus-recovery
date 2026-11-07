@@ -1,0 +1,489 @@
+#!/usr/bin/python3
+"""morpheus-recovery (Morpheus, 06.11.2026): MATRIX RECOVERY — the root part in the live system of a Duo on which Matrix
+is already installed. The laptop (Morpheus, «like iTunes») calls it over ssh:
+
+  morpheus-recovery zustand                  -> JSON: device, Matrix partition, accounts, system state
+  morpheus-recovery sichern                  -> Matrix backup as tar.zst on stdout (read-only)
+  morpheus-recovery zurueck                  <- Matrix backup (tar.zst) on stdin, merged into the system
+  morpheus-recovery frage <text>             -> asks on the Duo screen, exit 0 = yes, 1 = no/no answer
+  morpheus-recovery neu-vorbereiten          -> create a fresh Matrix partition; prints the target for the image
+  morpheus-recovery neu-abschliessen <sha>   -> verify the image, put it in place, check the partition
+  morpheus-recovery starten                  -> reboot the Duo into the bootloader (the laptop then starts Matrix)
+
+A MATRIX BACKUP contains what belongs to the human, not the operating system: home folders, accounts (merged into the
+system's account list, never replacing a whole passwd), Wi-Fi credentials, Bluetooth pairings, language & keyboard.
+That way a backup also fits a newer Matrix.
+
+PROTECTION: writes go exclusively to the partition «fedora» (by-partlabel -> device -> file system label
+duo-fedora). With /etc/morpheus-trocken NOTHING is written (backing up only reads and is always allowed).
+Test without a live system: --wurzel <ordner> takes this folder as the Matrix partition (e.g. /disk on a running Duo).
+"""
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+
+TROCKEN = os.path.exists("/etc/morpheus-trocken")
+RUN = "/run/morpheus"
+PART = "/dev/disk/by-partlabel/fedora"
+LABEL = "duo-fedora"
+MNT = "/mnt/morpheus"
+# What a Matrix backup takes from the layer (overlay/upper) — relative to the system root.
+TEIL = ["home", "etc/matrix", "etc/locale.conf", "etc/vconsole.conf", "etc/NetworkManager/system-connections",
+        "var/lib/bluetooth", "var/lib/AccountsService/users"]
+KONTO_DATEIEN = ["passwd", "shadow", "group", "gshadow"]
+UID_MIN, UID_MAX = 1000, 59999
+WURZEL = None  # --wurzel: test against an already mounted Matrix
+
+
+def log(text):
+    """Progress: on stderr (the laptop shows it) and for the recovery page on the Duo."""
+    print("recovery: " + text, file=sys.stderr, flush=True)
+    try:
+        os.makedirs(RUN, exist_ok=True)
+        with open(os.path.join(RUN, "recovery"), "a") as f:
+            f.write(text + "\n")
+    except OSError:
+        pass
+
+
+def run(*cmd, check=True, **kw):
+    r = subprocess.run(list(cmd), capture_output=True, text=True, **kw)
+    if check and r.returncode != 0:
+        raise RuntimeError(f"{cmd[0]}: {r.stderr.strip()[:200]}")
+    return r.stdout
+
+
+def partition():
+    """The device of the Matrix partition — only if name AND file system match."""
+    if not os.path.exists(PART):
+        return None
+    dev = os.path.realpath(PART)
+    if not dev.startswith("/dev/sda"):
+        raise RuntimeError(f"ABBRUCH: fedora liegt auf {dev}, nicht auf /dev/sda")
+    label = run("blkid", "-s", "LABEL", "-o", "value", dev, check=False).strip()
+    if label and label != LABEL:
+        raise RuntimeError(f"ABBRUCH: fedora trägt das Dateisystem «{label}», nicht «{LABEL}»")
+    return dev
+
+
+def mounted_at(dev):
+    for line in open("/proc/mounts"):
+        f = line.split()
+        if os.path.realpath(f[0]) == dev:
+            return f[1]
+    return None
+
+
+class Eingehaengt:
+    """The Matrix partition mounted (read-only or writable) — or --wurzel."""
+
+    def __init__(self, schreiben=False):
+        self.schreiben = schreiben
+        self.selbst = False
+
+    def __enter__(self):
+        if WURZEL:
+            return WURZEL
+        dev = partition()
+        if not dev:
+            raise RuntimeError("Auf diesem Duo ist keine Matrix-Partition")
+        da = mounted_at(dev)
+        if da:
+            return da
+        os.makedirs(MNT, exist_ok=True)
+        run("mount", "-t", "ext4", "-o", ("rw,noatime" if self.schreiben and not TROCKEN else "ro"), dev, MNT)
+        self.selbst = True
+        return MNT
+
+    def __exit__(self, *a):
+        if self.selbst:
+            run("sync", check=False)
+            run("umount", MNT, check=False)
+
+
+def upper_of(root):
+    return os.path.join(root, "overlay/upper")
+
+
+def lower_file(root, rel):
+    """A file from the system image (system/A.sqfs), without the layer above it."""
+    cur = open(os.path.join(root, "system/current")).read().strip() if os.path.exists(os.path.join(root, "system/current")) else "A"
+    sq = os.path.join(root, f"system/{cur}.sqfs")
+    if not os.path.exists(sq):
+        return ""
+    # Mounted read-only (unsquashfs is not in the image).
+    d = tempfile.mkdtemp(prefix="morpheus-sq-")
+    try:
+        run("mount", "-t", "squashfs", "-o", "loop,ro", sq, d)
+        try:
+            return open(os.path.join(d, rel)).read()
+        except OSError:
+            return ""
+        finally:
+            run("umount", d, check=False)
+    finally:
+        os.rmdir(d)
+
+
+def system_file(root, rel):
+    """What the installed system sees at this location: the layer, otherwise the image."""
+    p = os.path.join(upper_of(root), rel)
+    if os.path.exists(p):
+        return open(p).read()
+    return lower_file(root, rel)
+
+
+def personen(passwd_text):
+    out = []
+    for line in passwd_text.splitlines():
+        f = line.split(":")
+        if len(f) >= 7 and f[2].isdigit() and UID_MIN <= int(f[2]) <= UID_MAX:
+            out.append(f[0])
+    return out
+
+
+# ------------------------------------------------------------------ Konten (rein, getestet)
+
+def konten_auszug(texts):
+    """From passwd/shadow/group/gshadow only what belongs to people: their lines, their own groups, their
+    memberships in system groups (by name)."""
+    names = set(personen(texts["passwd"]))
+    out = {"passwd": [], "shadow": [], "group": [], "gshadow": [], "mitglied": {}}
+    for line in texts["passwd"].splitlines():
+        if line.split(":")[0] in names:
+            out["passwd"].append(line)
+    for line in texts.get("shadow", "").splitlines():
+        if line.split(":")[0] in names:
+            out["shadow"].append(line)
+    for key in ("group", "gshadow"):
+        for line in texts.get(key, "").splitlines():
+            f = line.split(":")
+            if not f or not f[0]:
+                continue
+            if f[0] in names:
+                out[key].append(line)
+            elif key == "group":
+                mem = [m for m in f[-1].split(",") if m in names]
+                if mem:
+                    out["mitglied"][f[0]] = mem
+    return out
+
+
+def konten_einfuegen(base, auszug):
+    """Merge the backup's accounts into the system's account list. Same name: replaced. A UID/GID that belongs to
+    ANOTHER person/group in the system: abort (nothing gets half-written)."""
+    out = {}
+    for key in KONTO_DATEIEN:
+        lines = [l for l in base.get(key, "").splitlines() if l.strip()]
+        new = auszug.get(key, [])
+        new_names = {l.split(":")[0] for l in new}
+        if key in ("passwd", "group"):
+            ids = {l.split(":")[2]: l.split(":")[0] for l in lines if len(l.split(":")) > 2}
+            for l in new:
+                f = l.split(":")
+                owner = ids.get(f[2])
+                if owner and owner != f[0]:
+                    raise RuntimeError(f"ABBRUCH: {'UID' if key == 'passwd' else 'GID'} {f[2]} gehört im System «{owner}», in der Sicherung «{f[0]}»")
+        lines = [l for l in lines if l.split(":")[0] not in new_names] + new
+        out[key] = lines
+    # Memberships in system groups (wheel, video, …) — only groups that exist in the system.
+    for key in ("group", "gshadow"):
+        fixed = []
+        for l in out[key]:
+            f = l.split(":")
+            add = auszug.get("mitglied", {}).get(f[0], [])
+            if add:
+                cur = [m for m in f[-1].split(",") if m]
+                f[-1] = ",".join(cur + [m for m in add if m not in cur])
+                l = ":".join(f)
+            fixed.append(l)
+        out[key] = fixed
+    return {k: "\n".join(v) + "\n" for k, v in out.items()}
+
+
+# ------------------------------------------------------------------ Befehle
+
+def zustand():
+    info = {"trocken": TROCKEN, "matrix_da": False}
+    try:
+        info["modell"] = open("/proc/device-tree/model").read().strip("\0")
+    except OSError:
+        info["modell"] = "?"
+    try:
+        info["seriennummer"] = open("/sys/devices/soc0/serial_number").read().strip()
+    except OSError:
+        info["seriennummer"] = ""
+    dev = None if WURZEL else partition()
+    if not dev and not WURZEL:
+        print(json.dumps(info, ensure_ascii=False))
+        return
+    info["matrix_da"] = True
+    if dev:
+        info["matrix_gib"] = round(int(run("blockdev", "--getsize64", dev).strip()) / 2**30, 1)
+    with Eingehaengt() as root:
+        info["konten"] = personen(system_file(root, "etc/passwd"))
+        sq = os.path.join(root, "system/A.sqfs")
+        info["system"] = time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(sq))) if os.path.exists(sq) else ""
+        st = os.statvfs(root)
+        info["frei_gib"] = round(st.f_bavail * st.f_frsize / 2**30, 1)
+        du = run("du", "-sb", *[os.path.join(upper_of(root), t) for t in TEIL if os.path.exists(os.path.join(upper_of(root), t))], check=False)
+        info["daten_mb"] = round(sum(int(l.split()[0]) for l in du.splitlines() if l.split()) / 2**20)
+    print(json.dumps(info, ensure_ascii=False))
+
+
+def sichern():
+    """tar.zst on stdout: first morpheus/info.json + morpheus/konten.json, then the parts of the layer."""
+    with Eingehaengt() as root:
+        up = upper_of(root)
+        texts = {k: system_file(root, f"etc/{k}") for k in KONTO_DATEIEN}
+        auszug = konten_auszug(texts)
+        # While running, via sudo (Morpheus on the laptop, matrix-begleiter): only if there is no other account besides the
+        # calling person — otherwise one person would read the home folders of the others. In that case: in recovery.
+        wer = os.environ.get("SUDO_USER")
+        andere = [l.split(":")[0] for l in auszug["passwd"] if l.split(":")[0] != wer]
+        if wer and andere:
+            raise RuntimeError("Mehrere Konten auf diesem Duo — die Sicherung geht nur im Recovery")
+        if not auszug["passwd"]:
+            log("Hinweis: auf diesem Matrix gibt es noch kein Konto")
+        meta = tempfile.mkdtemp(prefix="morpheus-")
+        os.makedirs(os.path.join(meta, "morpheus"))
+        info = {"art": "matrix-sicherung", "version": 1, "zeit": time.strftime("%Y-%m-%d %H:%M"),
+                "konten": [l.split(":")[0] for l in auszug["passwd"]], "teile": [t for t in TEIL if os.path.lexists(os.path.join(up, t))]}
+        try:
+            info["seriennummer"] = open("/sys/devices/soc0/serial_number").read().strip()
+        except OSError:
+            pass
+        json.dump(info, open(os.path.join(meta, "morpheus/info.json"), "w"), ensure_ascii=False, indent=1)
+        json.dump(auszug, open(os.path.join(meta, "morpheus/konten.json"), "w"), ensure_ascii=False, indent=1)
+        os.chmod(os.path.join(meta, "morpheus/konten.json"), 0o600)
+        log(f"sichere {', '.join(info['konten']) or 'kein Konto'}: {', '.join(info['teile'])}")
+        tar = subprocess.Popen(["tar", "--numeric-owner", "--xattrs", "--xattrs-include=*", "--acls", "-cf", "-", "-C", meta, "morpheus", "-C", up] + info["teile"],
+                               stdout=subprocess.PIPE)
+        z = subprocess.Popen(["zstd", "-3", "-T4", "-q", "-c"], stdin=tar.stdout, stdout=sys.stdout.buffer)
+        tar.stdout.close()
+        z.wait()
+        rc = tar.wait()
+        subprocess.run(["rm", "-rf", meta])
+        # tar 1 = «file changed while being read» — not expected on the idle live system, but not a failure.
+        if rc not in (0, 1) or z.returncode != 0:
+            raise RuntimeError(f"Sicherung unvollständig (tar {rc}, zstd {z.returncode})")
+        log("Sicherung fertig")
+
+
+def zurueck():
+    """tar.zst from stdin: files into the layer, accounts merged. First everything into a staging folder on the partition
+    (same file system -> afterwards only a rename), then merge."""
+    with Eingehaengt(schreiben=True) as root:
+        up = upper_of(root)
+        if TROCKEN:
+            n = 0
+            while True:
+                chunk = sys.stdin.buffer.read(1 << 20)
+                if not chunk:
+                    break
+                n += len(chunk)
+            log(f"Trockenlauf: würde {n // 2**20} MB Matrix-Daten zurückspielen und die Konten einfügen")
+            return
+        stage = os.path.join(root, "overlay/.morpheus-zurueck")
+        subprocess.run(["rm", "-rf", stage])
+        os.makedirs(stage)
+        log("empfange die Sicherung …")
+        try:
+            _zurueck_aus(root, up, stage)
+        finally:
+            subprocess.run(["rm", "-rf", stage])
+        run("sync", check=False)
+        log("Matrix-Daten zurückgespielt")
+
+
+def _zurueck_aus(root, up, stage):
+    """Unpack into the staging folder, check and merge accounts, put the parts in place."""
+    z = subprocess.Popen(["zstd", "-dc"], stdin=sys.stdin.buffer, stdout=subprocess.PIPE)
+    tar = subprocess.run(["tar", "--numeric-owner", "--xattrs", "--xattrs-include=*", "--acls", "-xpf", "-", "-C", stage], stdin=z.stdout, capture_output=True)
+    z.stdout.close()
+    if z.wait() != 0 or tar.returncode != 0:
+        raise RuntimeError("Sicherung beschädigt oder unvollständig: " + tar.stderr.decode()[:200])
+    meta = os.path.join(stage, "morpheus")
+    info = json.load(open(os.path.join(meta, "info.json")))
+    if info.get("art") != "matrix-sicherung":
+        raise RuntimeError("Das ist keine Matrix-Sicherung")
+    auszug = json.load(open(os.path.join(meta, "konten.json")))
+    base = {k: system_file(root, f"etc/{k}") for k in KONTO_DATEIEN}
+    neu = konten_einfuegen(base, auszug)  # raises before any write if something does not fit
+    log(f"spiele zurück: {', '.join(info.get('konten', [])) or 'kein Konto'}")
+    os.makedirs(up, exist_ok=True)
+    for t in info.get("teile", []):
+        src = os.path.join(stage, t)
+        if not os.path.lexists(src):
+            continue
+        dst = os.path.join(up, t)
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        if os.path.lexists(dst):
+            subprocess.run(["rm", "-rf", dst], check=True)
+        os.rename(src, dst)
+    os.makedirs(os.path.join(up, "etc"), exist_ok=True)
+    modes = {"passwd": 0o644, "group": 0o644, "shadow": 0o000, "gshadow": 0o000}
+    for k, text in neu.items():
+        p = os.path.join(up, "etc", k)
+        tmp = p + ".morpheus"
+        with open(tmp, "w") as f:
+            f.write(text)
+        os.chmod(tmp, modes[k])
+        os.rename(tmp, p)
+
+
+def frage(text):
+    """The one confirmation question on the Duo screen (recovery page): 5 minutes to answer."""
+    os.makedirs(RUN, exist_ok=True)
+    ant = os.path.join(RUN, "antwort")
+    if os.path.exists(ant):
+        os.remove(ant)
+    with open(os.path.join(RUN, "frage"), "w") as f:
+        f.write(text + "\n")
+    log("warte auf die Bestätigung auf dem Duo …")
+    try:
+        for _ in range(300):
+            if os.path.exists(ant):
+                ja = open(ant).read().strip() == "ja"
+                log("auf dem Duo bestätigt" if ja else "auf dem Duo abgelehnt")
+                return 0 if ja else 1
+            time.sleep(1)
+        log("keine Antwort auf dem Duo")
+        return 1
+    finally:
+        for p in (os.path.join(RUN, "frage"), ant):
+            if os.path.exists(p):
+                os.remove(p)
+
+
+def neu_vorbereiten():
+    """Matrix NEW: only the partition fedora — Android and the partition layout stay. Prints the image target."""
+    dev = partition()
+    if not dev:
+        raise RuntimeError("Keine Matrix-Partition — für ein neues Duo «Matrix installieren»")
+    size = int(run("blockdev", "--getsize64", dev).strip())
+    if mounted_at(dev):
+        run("umount", dev)
+    if TROCKEN:
+        log(f"Trockenlauf: würde {dev} ({size // 2**30} GB) neu anlegen — Android bleibt unberührt")
+        print("/dev/null")
+        return
+    if os.path.realpath(PART) != dev or int(run("blockdev", "--getsize64", dev).strip()) != size:
+        raise RuntimeError("ABBRUCH: die Matrix-Partition hat sich verändert")
+    log("lege die Matrix-Partition neu an")
+    run("mkfs.ext4", "-q", "-F", "-L", LABEL, "-O", "^orphan_file,^metadata_csum_seed", dev)
+    os.makedirs(MNT, exist_ok=True)
+    run("mount", "-t", "ext4", "-o", "rw,noatime,data=ordered", dev, MNT)
+    for d in ("system", "overlay/upper", "overlay/work"):
+        os.makedirs(os.path.join(MNT, d), exist_ok=True)
+    # Language & keyboard of the live system (chosen on the laptop) into the new system.
+    def read_or(p, d):
+        try:
+            return open(p).read().strip() or d
+        except OSError:
+            return d
+    chain = read_or("/etc/matrix/languages", "de-CH,en-GB")
+    kbd = read_or("/etc/matrix/keyboard", "ch")
+    up = os.path.join(MNT, "overlay/upper")
+    for rel, text in {"etc/matrix/languages": chain, "etc/matrix/keyboard": kbd,
+                      "etc/locale.conf": "LANG=" + ("en_GB.UTF-8" if chain.startswith("en") else "de_CH.UTF-8"),
+                      "etc/vconsole.conf": "KEYMAP=" + ("uk" if kbd == "gb" else "ch")}.items():
+        os.makedirs(os.path.dirname(os.path.join(up, rel)), exist_ok=True)
+        open(os.path.join(up, rel), "w").write(text + "\n")
+    print(os.path.join(MNT, "system/A.sqfs.teil"))
+
+
+def neu_abschliessen(sha):
+    if TROCKEN:
+        log("Trockenlauf: würde das Abbild prüfen, einsetzen und die Partition prüfen")
+        return
+    teil = os.path.join(MNT, "system/A.sqfs.teil")
+    log("prüfe das Abbild …")
+    if run("sha256sum", teil).split()[0] != sha:
+        raise RuntimeError("ABBRUCH: das übertragene Abbild ist beschädigt (Prüfsumme)")
+    os.rename(teil, os.path.join(MNT, "system/A.sqfs"))
+    open(os.path.join(MNT, "system/current"), "w").write("A\n")
+    open(os.path.join(MNT, "system/tries"), "w").write("0\n")
+    dev = partition()
+    run("sync")
+    run("umount", MNT)
+    out = subprocess.run(["e2fsck", "-n", dev], capture_output=True, text=True)
+    if out.returncode not in (0, 1):
+        raise RuntimeError("Dateisystem-Prüfung meldet Fehler")
+    log("Matrix ist neu installiert")
+
+
+def starten():
+    log("Duo startet in den Bootloader — Morpheus startet Matrix von der Partition")
+    # Immediately and hard (06.11.2026): the orderly shutdown of the live system (root in RAM) hung —
+    # black screen, no reboot. Nothing persistent is open in the live system; the Matrix partition is only
+    # mounted during a step and unmounted again afterwards.
+    run("sync", check=False)
+    subprocess.Popen(["systemctl", "reboot", "--force", "--force", "--reboot-argument=bootloader"])
+
+
+def selbsttest():
+    texts = {
+        "passwd": "root:x:0:0::/root:/bin/bash\ngreetd:x:985:985::/var/lib/greetd:/sbin/nologin\nlea:x:1000:1000:Lea:/home/lea:/bin/bash\n",
+        "shadow": "root:!::0:99999:7:::\ngreetd:!*:::::::\nlea:$y$hash:20000:0:99999:7:::\n",
+        "group": "root:x:0:\nwheel:x:10:lea\nvideo:x:39:lea,greetd\ngreetd:x:985:\nlea:x:1000:\n",
+        "gshadow": "root:::\nwheel:::lea\nlea:!::\n",
+    }
+    a = konten_auszug(texts)
+    assert [l.split(":")[0] for l in a["passwd"]] == ["lea"], a
+    assert a["mitglied"] == {"wheel": ["lea"], "video": ["lea"]}, a["mitglied"]
+    fresh = {"passwd": "root:x:0:0::/root:/bin/bash\ngreetd:x:985:985::/var/lib/greetd:/sbin/nologin\nneu:x:986:986::/:/sbin/nologin\n",
+             "shadow": "root:!::0:99999:7:::\n", "group": "root:x:0:\nwheel:x:10:\nvideo:x:39:greetd\ngreetd:x:985:\n", "gshadow": "root:::\nwheel:::\n"}
+    m = konten_einfuegen(fresh, a)
+    assert "lea:x:1000:1000" in m["passwd"] and "neu:x:986" in m["passwd"], m["passwd"]
+    assert "wheel:x:10:lea" in m["group"] and "video:x:39:greetd,lea" in m["group"], m["group"]
+    assert "lea:$y$hash" in m["shadow"]
+    clash = dict(fresh, passwd=fresh["passwd"] + "anna:x:1000:1000::/home/anna:/bin/bash\n")
+    try:
+        konten_einfuegen(clash, a)
+        raise AssertionError("UID-Konflikt nicht erkannt")
+    except RuntimeError:
+        pass
+    again = konten_einfuegen({k: v for k, v in m.items()}, a)
+    assert [l.split(":")[0] for l in again["passwd"].splitlines()].count("lea") == 1, "zweimal einfügen (passwd)"
+    assert again["group"].count("wheel:x:10:lea\n") == 1, "zweimal einfügen (wheel)"
+    print("selbsttest ok")
+
+
+def main():
+    global WURZEL
+    args = sys.argv[1:]
+    if args[:1] == ["--wurzel"]:
+        WURZEL = os.path.abspath(args[1])
+        args = args[2:]
+    cmd = args[0] if args else ""
+    try:
+        if cmd == "zustand":
+            zustand()
+        elif cmd == "sichern":
+            sichern()
+        elif cmd == "zurueck":
+            zurueck()
+        elif cmd == "frage":
+            sys.exit(frage(" ".join(args[1:])))
+        elif cmd == "neu-vorbereiten":
+            neu_vorbereiten()
+        elif cmd == "neu-abschliessen":
+            neu_abschliessen(args[1])
+        elif cmd == "starten":
+            starten()
+        elif cmd == "--selbsttest":
+            selbsttest()
+        else:
+            print(__doc__, file=sys.stderr)
+            sys.exit(2)
+    except Exception as e:
+        log(f"FEHLER: {e}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

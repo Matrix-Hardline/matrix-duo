@@ -1,0 +1,8 @@
+[Unit]
+Description=Matrix Tube: PO-Token-Anbieter (bgutil, localhost:4416)
+[Service]
+WorkingDirectory=%h/.local/share/matrix-tube/bgutil-ytdlp-pot-provider/server
+ExecStart=/usr/bin/node build/main.js --host 127.0.0.1 --port 4416
+Restart=on-failure
+[Install]
+WantedBy=default.target

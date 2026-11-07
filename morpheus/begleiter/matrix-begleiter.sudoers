@@ -1,0 +1,4 @@
+# Morpheus (06.11.2026): exactly two things without a password, nothing else —
+#  * reboot the Duo into the bootloader (for Matrix Recovery),
+#  * a Matrix backup while the system is running (morpheus-recovery refuses it if there are several accounts).
+%wheel ALL=(root) NOPASSWD: /usr/local/bin/duo-in-den-bootloader, /usr/local/bin/morpheus-recovery --wurzel /duo-disk sichern

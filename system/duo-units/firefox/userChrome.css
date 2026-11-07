@@ -1,0 +1,2 @@
+/* Duo: lift the Firefox window's minimum width so Mutter may maximize it on 489 logical pixels (275 %) */
+:root { min-width: 200px !important; }

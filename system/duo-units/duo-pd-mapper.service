@@ -1,0 +1,11 @@
+[Unit]
+Description=duo: Qualcomm protection-domain mapper (.jsn from /lib/firmware)
+After=duo-qrtr-ns.service duo-firmware.service
+Requires=duo-qrtr-ns.service
+
+[Service]
+ExecStart=/usr/local/bin/pd-mapper
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

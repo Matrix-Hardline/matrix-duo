@@ -1,0 +1,9 @@
+[Unit]
+Description=Surface Duo: Tiefschlaf, wenn die Panels dunkel und nichts aktiv ist (duo-schlaf)
+After=duo-haltung.service duo-powerkey.service duo-bt.service
+[Service]
+ExecStart=/usr/bin/python3 /usr/local/bin/duo-schlaf.py
+Restart=always
+RestartSec=5
+[Install]
+WantedBy=multi-user.target

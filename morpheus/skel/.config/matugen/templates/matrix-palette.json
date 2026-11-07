@@ -1,0 +1,34 @@
+{
+  "colors": {
+    "dark": {
+      "primary": "{{colors.primary.dark.hex}}",
+      "on_primary": "{{colors.on_primary.dark.hex}}",
+      "primary_container": "{{colors.primary_container.dark.hex}}",
+      "on_primary_container": "{{colors.on_primary_container.dark.hex}}",
+      "secondary": "{{colors.secondary.dark.hex}}",
+      "tertiary": "{{colors.tertiary.dark.hex}}",
+      "surface": "{{colors.surface.dark.hex}}",
+      "on_surface": "{{colors.on_surface.dark.hex}}",
+      "on_surface_variant": "{{colors.on_surface_variant.dark.hex}}",
+      "surface_container": "{{colors.surface_container.dark.hex}}",
+      "surface_container_high": "{{colors.surface_container_high.dark.hex}}",
+      "outline": "{{colors.outline.dark.hex}}",
+      "error": "{{colors.error.dark.hex}}"
+    },
+    "light": {
+      "primary": "{{colors.primary.light.hex}}",
+      "on_primary": "{{colors.on_primary.light.hex}}",
+      "primary_container": "{{colors.primary_container.light.hex}}",
+      "on_primary_container": "{{colors.on_primary_container.light.hex}}",
+      "secondary": "{{colors.secondary.light.hex}}",
+      "tertiary": "{{colors.tertiary.light.hex}}",
+      "surface": "{{colors.surface.light.hex}}",
+      "on_surface": "{{colors.on_surface.light.hex}}",
+      "on_surface_variant": "{{colors.on_surface_variant.light.hex}}",
+      "surface_container": "{{colors.surface_container.light.hex}}",
+      "surface_container_high": "{{colors.surface_container_high.light.hex}}",
+      "outline": "{{colors.outline.light.hex}}",
+      "error": "{{colors.error.light.hex}}"
+    }
+  }
+}

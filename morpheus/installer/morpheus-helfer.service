@@ -1,0 +1,12 @@
+[Unit]
+Description=Morpheus: Installer-Dienst im Live-System (nur mit /etc/morpheus-live)
+ConditionPathExists=/etc/morpheus-live
+Before=greetd.service
+After=duo-firmware.service local-fs.target
+
+[Service]
+ExecStart=/usr/local/bin/morpheus-helfer
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

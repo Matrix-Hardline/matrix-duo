@@ -1,0 +1,17 @@
+#!/bin/bash
+# GNOME Shell (Mutter, Wayland) on the Surface Duo 1 – start from the autologin session on tty1 (logind seat0).
+# Mesa: zink (Vulkan/turnip on kgsl) as the GL driver; GTK apps via Vulkan.
+export XDG_SESSION_TYPE=wayland XDG_CURRENT_DESKTOP=GNOME XDG_SESSION_DESKTOP=gnome
+export MESA_LOADER_DRIVER_OVERRIDE=${DUO_GL:-zink} GSK_RENDERER=${GSK_RENDERER:-vulkan}
+# ATOMIC KMS like wlroots (legacy/simple -> dsi FIFO UNDERFLOW = noise); HW cursor OFF (cursor plane = kernel crash 20:53), KMS in the main thread
+export MUTTER_DEBUG_DISABLE_HW_CURSORS=1 MUTTER_DEBUG_KMS_THREAD_TYPE=user
+export LANG=de_CH.UTF-8
+# Turnip: GPU page faults (VSC/LRZ, address 0x40) on the first frame -> sysmem rendering without binning, without LRZ
+export TU_DEBUG=${TU_DEBUG:-sysmem,nolrz,noubwc}
+# The touch->panel mapping must be set as a USER VALUE (Mutter reads g_settings_get_user_value; the system layer does not count)
+S=org.gnome.desktop.peripherals.touchscreen:/org/gnome/desktop/peripherals/touchscreens
+gsettings set $S/045e:0c01/ output "['QCM', '0x0001', '0x00000001', 'DSI-1']" 2>/dev/null
+gsettings set $S/045e:0c02/ output "['QCM', '0x0001', '0x00000001', 'DSI-2']" 2>/dev/null
+# only the shell itself first (gnome-session comes later, once the shell runs stably)
+L=/tmp/gnome-$(date +%H%M%S).log; ln -sfn $L /tmp/gnome.log; dbus-run-session -- gnome-shell --wayland --display-server --no-x11 >$L 2>&1
+echo "gnome-shell beendet rc=$? $(date +%T)" >> /tmp/gnome.log; sleep 20

@@ -1,0 +1,26 @@
+diff --git a/src/layersurface.c b/src/layersurface.c
+index 52885b7..c1dcead 100644
+--- a/src/layersurface.c
++++ b/src/layersurface.c
+@@ -183,6 +183,12 @@ phosh_layer_surface_set_stacked (PhoshLayerSurface *self, PhoshLayerSurface *tar
+     return;
+   }
+ 
++  if (priv->wl_output != target_priv->wl_output) {
++    g_warning ("Not stacking '%s' relative to '%s': different outputs (%p vs %p)",
++               priv->namespace, target_priv->namespace, priv->wl_output, target_priv->wl_output);
++    return;
++  }
++
+   if (above)
+     zphoc_stacked_layer_surface_v1_stack_above (priv->stacked_surface, target_priv->layer_surface);
+   else
+@@ -474,7 +480,7 @@ phosh_layer_surface_class_init (PhoshLayerSurfaceClass *klass)
+       "wl-output",
+       "Wayland Output",
+       "The wl_output associated with this surface",
+-      G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS);
++      G_PARAM_READWRITE | G_PARAM_CONSTRUCT | G_PARAM_STATIC_STRINGS);
+ 
+   props[PHOSH_LAYER_SURFACE_PROP_ANCHOR] =
+     g_param_spec_uint (

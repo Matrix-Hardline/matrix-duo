@@ -1,0 +1,24 @@
+#!/bin/bash
+# duo-shellschutz: make the kernel OOM killer sacrifice the user interface (shell, session, login) last.
+# The user session inherits oom_score_adj 100 from the user service; only root may lower it. Re-apply every 15 s
+# (new session after logout/crash). Part of the memory guard (duoSpeicher.js, earlyoom as last line), 31.10.2026.
+# Watch the shell's GPU memory (01.11.: 1.8 GB of KGSL kernel memory after 2 h, cause unknown): log every change of
+# >= 64 MB to the journal so the growth can be matched to actions (journalctl -t duo-gpumem).
+declare -A gpu_last
+while :; do
+    for p in $(pgrep -x gnome-shell); do
+        f=/sys/class/kgsl/kgsl/proc/$p/kernel
+        [ -r "$f" ] || continue
+        mb=$(( $(cat "$f") / 1048576 )); last=${gpu_last[$p]:-0}
+        if [ $(( mb - last )) -ge 64 ] || [ $(( last - mb )) -ge 64 ]; then
+            logger -t duo-gpumem "gnome-shell $p: ${mb} MB (vorher ${last} MB), RSS $(awk '/VmRSS/{print int($2/1024)}' /proc/$p/status) MB, frei $(awk '/MemAvailable/{print int($2/1024)}' /proc/meminfo) MB"
+            gpu_last[$p]=$mb
+        fi
+    done
+    for name in gnome-shell gnome-session-b gnome-session-c gdm-wayland-ses gdm-session-wor gdm pipewire wireplumber; do
+        for p in $(pgrep -x "$name"); do
+            [ "$(cat /proc/$p/oom_score_adj 2>/dev/null)" = -900 ] || echo -900 > /proc/$p/oom_score_adj 2>/dev/null
+        done
+    done
+    sleep 15
+done

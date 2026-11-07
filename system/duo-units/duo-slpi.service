@@ -1,0 +1,12 @@
+[Unit]
+Description=duo: boot the SLPI sensor DSP (hinge angle, hall, accel/gyro via Sensor Core)
+After=duo-firmware.service duo-modem.service
+Wants=duo-firmware.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'echo 1 > /sys/kernel/boot_slpi/boot; for i in $(seq 1 20); do for d in /sys/bus/msm_subsys/devices/subsys*; do [ "$(cat $d/name)" = slpi ] && [ "$(cat $d/state)" = ONLINE ] && { echo "duo-slpi: ONLINE nach $i s"; exit 0; }; done; sleep 1; done; echo "duo-slpi: nicht ONLINE"; exit 1'
+
+[Install]
+WantedBy=multi-user.target

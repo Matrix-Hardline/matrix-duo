@@ -1,0 +1,8 @@
+{
+  "app_id": "matrix-markdown",
+  "intents": [
+    { "id": "markdown.new", "title": "Neue Notiz",
+      "exec": ["matrix-markdown"],
+      "keywords": ["notiz", "note", "markdown"] }
+  ]
+}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Matrix Ersteinrichtung: ein Auftrag
+
+[Service]
+ExecStart=/usr/local/bin/matrix-erststart-helfer
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal

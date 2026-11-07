@@ -1,0 +1,14 @@
+[Unit]
+Description=duo: hexagonrpcd – FastRPC-Listener fuer den Sensor-DSP (Registry/Konfig fuer den SLPI)
+After=duo-slpi.service duo-android-map.service
+Requires=duo-slpi.service
+
+[Service]
+Type=simple
+ExecStartPre=/usr/local/sbin/duo-hexagon-root.sh
+ExecStart=/usr/local/bin/hexagonrpcd -f /dev/adsprpc-smd-secure -s -R /usr/share/duo/hexagon
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

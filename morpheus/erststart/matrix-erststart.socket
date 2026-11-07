@@ -1,0 +1,13 @@
+[Unit]
+Description=Matrix Ersteinrichtung: legt das erste Konto an (nur solange keines existiert)
+
+[Socket]
+ListenStream=/run/matrix-erststart.sock
+SocketUser=root
+SocketGroup=greetd
+SocketMode=0660
+Accept=yes
+MaxConnections=1
+
+[Install]
+WantedBy=sockets.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=duo: Start von der Fedora-Partition als gelungen markieren (Startzaehler zuruecksetzen)
+# Stage 1 v7 counts up /disk/system/tries and stops booting from disk after 3 failed boots.
+ConditionPathExists=/duo-disk/system/tries
+After=multi-user.target gdm.service
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'sleep 45; echo 0 > /duo-disk/system/tries && sync && echo "duo-boot-ok: Start bestaetigt"'
+[Install]
+WantedBy=multi-user.target
